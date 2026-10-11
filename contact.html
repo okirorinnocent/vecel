@@ -2,14 +2,15 @@
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Contact — JS Health Initiative East Africa</title>
 <meta name="description" content="A Ugandan non-profit supporting communities through digital skilling, public health education, research and surgical care support.">
-<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="extra.css"></head>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2750%27 fill=%27%23d31027%27/%3E%3C/svg%3E"><meta name="theme-color" content="#d31027"><link rel="stylesheet" href="style.css"></head>
 <body><div id="nav"></div>
-<section class="section"><div class="container contact-grid"><div><h2>Contact</h2><p class="section-lead">Reach us directly — we respond to every message.</p>
+<main id="main"><section class="page-head"><div class="container"><h1>Contact</h1></div></section>
+<section class="section"><div class="container contact-grid"><div><p class="section-lead">Reach us directly — we respond to every message.</p>
 <ul class="contact-list"><li><strong>Email</strong><a href="mailto:jshealthinitiativeeastafrica@gmail.com">jshealthinitiativeeastafrica@gmail.com</a></li>
 <li><strong>Phone</strong><a href="tel:+256779607233">+256 779 607 233</a></li><li><strong>Postal Address</strong>P.O. Box 424082</li><li><strong>Physical Address</strong>Mbarara, Uganda</li></ul></div>
 <div class="contact-card"><h3>Send a message</h3><p class="muted">We usually reply within a day or two.</p>
 <form class="stacked-form" data-type="contact" novalidate>
-<label>Your name<input name="name" maxlength="100" required></label><label>Email<input name="email" type="email" required></label>
+<label>Your name<input name="name" maxlength="100" autocomplete="name" required></label><label>Email<input name="email" type="email" maxlength="254" autocomplete="email" required></label>
 <label>Message<textarea name="message" rows="5" maxlength="3000" required></textarea></label>
-<button class="btn btn-large">Send message</button><p class="form-status" role="status"></p></form></div></div></section>
-<div id="foot"></div><script src="config.js"></script><script src="app.js"></script></body></html>
+<button class="btn btn-large">Send message</button><p class="form-status" role="status" aria-live="polite"></p></form></div></div></section>
+</main><div id="foot"></div><script src="config.js"></script><script src="app.js"></script></body></html>
