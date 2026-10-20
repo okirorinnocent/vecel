@@ -15,7 +15,7 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 - Spam protection via a hidden honeypot field on all public forms
 - Responsive, mobile-friendly design
 
-**Admin dashboard** (`admin.html`)
+**Admin dashboard** (`/admin` or `admin.html`)
 - Email and password sign-in, restricted to users listed in the `admins` table
 - View volunteer applications, contact messages, subscribers, donations and updates
 - Change the status of applications and messages (`new`, `reviewed`, `contacted`, `done`)
