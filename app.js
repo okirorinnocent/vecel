@@ -17,6 +17,8 @@ if($("#nav"))$("#nav").innerHTML=`<a class="skip" href="#main">Skip to content</
 const bg=$(".burger");if(bg)bg.onclick=()=>{const o=$("#links").classList.toggle("open");bg.setAttribute("aria-expanded",o)};
 if($("#foot"))$("#foot").innerHTML=`<footer><div class="container footer-inner"><div><p>&copy; ${new Date().getFullYear()} JS Health Initiative East Africa Ltd. Registered in Uganda · Company limited by guarantee.</p><p class="muted">Mbarara · P.O. Box 424082</p><p class="muted"><a href="contact.html">Contact</a> · <a href="donate.html">Donate</a> · <a href="volunteer.html">Volunteer</a></p></div><form class="stacked-form" data-type="subscribe" novalidate><label>Get updates<input name="email" type="email" placeholder="you@example.com" maxlength="254" autocomplete="email" required></label><button class="btn">Subscribe</button><p class="form-status" role="status" aria-live="polite"></p></form></div></footer>`;
 
+// Allowed checkout hosts: Flutterwave live + sandbox. Remove the heroku line once you only use live keys.
+const PAYHOST=/^(([\w-]+\.)*flutterwave\.com|([\w-]+\.)*dev-flutterwave\.com|ravemodal-dev\.herokuapp\.com)$/;
 const CURR=["USD","EUR","GBP","UGX"],MAXAMT={USD:10000,EUR:10000,GBP:10000,UGX:40000000};
 const EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 let last=0;
@@ -43,7 +45,7 @@ document.querySelectorAll("form[data-type]").forEach(f=>{
       const j=await api(d.type==="donate"?"donate":"submit",d);
       if(j.link){
         let u;try{u=new URL(j.link)}catch{}
-        if(!u||u.protocol!=="https:"||!/(^|\.)flutterwave\.com$/.test(u.hostname))throw new Error("Could not open the payment page safely. Please try again.");
+        if(!u||u.protocol!=="https:"||!PAYHOST.test(u.hostname))throw new Error("Could not open the payment page safely. Please try again.");
         location.href=u.href;return;
       }
       set(j.message||"Thank you!","ok");f.reset();
