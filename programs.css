@@ -49,3 +49,11 @@
 .program-link{color:var(--accent)}
 .program-arrow{color:var(--accent);background:#fff1f3}
 
+/* Program detail page */
+.program-detail{max-width:760px}
+.program-detail .program-icon{margin-bottom:1.25rem}
+.program-detail h1{font-size:clamp(2rem,4.5vw,3rem);line-height:1.1;color:var(--ink);margin:0 0 1rem}
+.program-detail .section-lead{margin-bottom:1.75rem}
+.program-detail .prose p{color:var(--text);line-height:1.8}
+.back-link{font-weight:600}
+

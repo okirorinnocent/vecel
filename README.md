@@ -38,10 +38,12 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 ├── programs.js       # Renders home-page program cards and the detail page
 ├── home.css          # Home page design (hero, focus-area cross, about, closing banner)
 ├── programs.css      # Styles for program cards and detail page
-├── programs.sql      # Supabase table, RLS policies and seed data for programs
 ├── app.js            # Shared logic: nav/footer, form handling, API helper, updates feed
 ├── config.js         # Supabase URL and public (publishable) key
-└── style.css         # Main styles (forms, admin tables and banners included)
+├── style.css         # Main styles (forms, admin tables and banners included)
+├── vercel.json       # Vercel security headers and the /admin rewrite
+└── supabase/
+    └── programs.sql  # Run once in the Supabase SQL Editor (programs table, RLS, seed data)
 ```
 
 ## Tech stack
@@ -76,7 +78,7 @@ You'll need a Supabase project with the following.
 | `donations` | `created_at`, `name`, `email`, `amount`, `currency`, `status` |
 | `updates` | `created_at`, `title`, `body`, `image_url`, `published` |
 | `admins` | `user_id` |
-| `programs` | `id`, `slug`, `title`, `summary`, `body`, `icon`, `link_url`, `sort_order`, `published` (run `programs.sql`) |
+| `programs` | `id`, `slug`, `title`, `summary`, `body`, `icon`, `link_url`, `sort_order`, `published` (run `supabase/programs.sql`) |
 
 **Storage:** a public bucket named `updates` for update images.
 

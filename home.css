@@ -361,3 +361,35 @@
   .home .tile-icon { font-size: 1.3rem; }
   .home .plus-note { font-size: 0.7rem; }
 }
+
+/* ---------- Fixes: leftover decoration and hover states ---------- */
+/* Decorative rings from the old design sat behind the focus-area cross */
+.home .hero::before,
+.home .hero::after { display: none; }
+
+/* The old card glow and lift do not belong in the list layout */
+.home .program-card::before { display: none; }
+.home .program-card:hover,
+.home .program-card:focus-within { transform: none; box-shadow: none; }
+.home .program-card:focus-within { outline-offset: -3px; }
+
+/* Emoji used to turn white on hover (a filter from programs.css) and disappear */
+.home .program-icon { color: inherit; box-shadow: none; }
+.home .program-card:hover .program-icon,
+.home .program-card:focus-within .program-icon {
+  background: var(--mist);
+  transform: none;
+  filter: none;
+}
+.home .program-arrow { color: var(--red); }
+.home .program-card:hover .program-arrow,
+.home .program-card:focus-within .program-arrow {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+  transform: none;
+}
+
+/* Keep the focus-area cross inside narrow screens */
+.home .plus { box-sizing: border-box; }
+.home .tile { min-width: 0; }
