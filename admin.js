@@ -8,7 +8,7 @@ async function boot(){
   const{data,error}=await sb.from("admins").select("user_id").eq("user_id",session.user.id).maybeSingle();
   if(error||!data){await sb.auth.signOut();$("#login").hidden=false;$("#panel").hidden=true;$("#ls").textContent="This account is not an admin.";return}
   $("#login").hidden=true;$("#panel").hidden=false;
-  $("#tabs").innerHTML=[...Object.keys(T),"compose"].map(k=>`<button class="btn btn-ghost" data-t="${k}">${k}</button>`).join("");
+  $("#tabs").innerHTML=[...Object.keys(T),"programs","compose"].map(k=>`<button class="btn btn-ghost" data-t="${k}">${k}</button>`).join("");
   show(cur);
 }
 function mark(t){document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.t===t))}
@@ -21,6 +21,7 @@ $("#out").onclick=async()=>{await sb.auth.signOut();boot()};
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT"||ev==="TOKEN_REFRESH_FAILED")boot()});
 async function show(t){
   mark(t);const v=$("#view");
+  if(t==="programs")return programsAdmin(v);
   if(t==="compose"){
     v.innerHTML=`<h2>Post an update</h2><form id="up" class="stacked-form"><label>Title<input name="title" required maxlength="150"></label><label>Text<textarea name="body" rows="4" required maxlength="3000"></textarea></label><label>Image (optional, max 3 MB)<input name="image" type="file" accept="image/jpeg,image/png,image/webp"></label><button class="btn">Publish update</button></form>
     <h2>Email all subscribers</h2><form id="bc" class="stacked-form"><label>Subject<input name="subject" required maxlength="150"></label><label>Message<textarea name="message" rows="5" required maxlength="5000"></textarea></label><button class="btn">Send to subscribers</button></form>`;

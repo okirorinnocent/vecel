@@ -1,0 +1,43 @@
+/* Programs section: add <link rel="stylesheet" href="programs.css"> after style.css */
+.programs-grid{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:1.5rem}
+.program-card{position:relative;display:flex;flex-direction:column;flex:0 1 calc((100% - 3rem)/3);min-width:280px;
+  background:#fff;border:1px solid var(--border);border-radius:20px;padding:1.75rem 1.75rem 1.5rem;
+  transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+/* gradient "glow" border, revealed on hover or keyboard focus */
+.program-card::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;pointer-events:none;opacity:0;transition:opacity .25s ease;
+  background:linear-gradient(135deg,var(--accent),#ff8a98 55%,rgba(211,16,39,0) 90%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.program-card:hover,.program-card:focus-within{transform:translateY(-6px);box-shadow:0 18px 40px -12px rgba(211,16,39,.28),0 4px 12px rgba(16,19,26,.06)}
+.program-card:hover::before,.program-card:focus-within::before{opacity:1}
+.program-icon{width:58px;height:58px;display:grid;place-items:center;font-size:1.65rem;border-radius:16px;margin-bottom:1.25rem;
+  background:var(--tint);transition:background .25s ease,transform .25s ease,filter .25s ease}
+.program-card:hover .program-icon,.program-card:focus-within .program-icon{background:var(--accent);transform:rotate(-6deg) scale(1.06);filter:grayscale(1) brightness(10)}
+.program-card h3{font-size:1.25rem;line-height:1.25;letter-spacing:-.01em;color:var(--ink);margin-bottom:.55rem}
+.program-card p{color:var(--muted);font-size:.97rem;line-height:1.6;margin-bottom:1.5rem}
+/* CTA: text + circular arrow button; the ::after makes the WHOLE card clickable */
+.program-link{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding-top:1rem;border-top:1px solid var(--border);color:var(--ink);font-weight:600;font-size:.95rem}
+.program-link:hover{text-decoration:none}
+.program-link::after{content:"";position:absolute;inset:0;border-radius:inherit}
+.program-link:focus-visible{outline:none}
+.program-card:focus-within{outline:3px solid var(--accent);outline-offset:3px}
+.program-arrow{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:50%;
+  background:var(--alt);color:var(--ink);transition:background .25s ease,color .25s ease,transform .25s ease}
+.program-arrow svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.program-card:hover .program-arrow,.program-card:focus-within .program-arrow{background:var(--accent);color:#fff;transform:translateX(4px)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.program-skeleton{min-height:260px;background:linear-gradient(90deg,var(--alt),#fff,var(--alt));background-size:200% 100%;animation:sk 1.4s infinite}
+@keyframes sk{to{background-position:-200% 0}}
+/* detail page */
+.program-detail{max-width:720px}
+.program-detail .program-icon{width:72px;height:72px;font-size:2rem}
+.program-detail .prose p{margin-bottom:1.1rem;font-size:1.05rem;max-width:68ch}
+.program-detail .hero-actions{margin-top:2rem}
+.back-link{display:inline-block;margin-bottom:1.5rem;font-size:.92rem}
+/* admin form tweaks */
+.stacked-form input[type=checkbox]{width:auto;justify-self:start}
+.row-actions{display:flex;gap:.4rem;flex-wrap:wrap}
+.row-actions .btn{padding:.3rem .65rem;font-size:.8rem}
+@media(max-width:720px){.program-card{flex-basis:100%;min-width:0}}
+@media(prefers-reduced-motion:reduce){.program-card,.program-icon,.program-arrow{transition:none!important}.program-card:hover,.program-card:focus-within{transform:none}.program-skeleton{animation:none}}

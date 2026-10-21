@@ -7,7 +7,7 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 ## Features
 
 **Public site**
-- Home page with mission, focus areas and a live "Latest updates" feed
+- Home page with mission, admin-managed program cards linking to their own pages, and a live "Latest updates" feed
 - Volunteer application form
 - Contact form
 - Donation page (USD, EUR, GBP, UGX) with quick-amount buttons and a payment success/failure banner
@@ -20,6 +20,7 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 - View volunteer applications, contact messages, subscribers, donations and updates
 - Change the status of applications and messages (`new`, `reviewed`, `contacted`, `done`)
 - Donation totals per currency (successful payments only)
+- Add, edit, reorder, hide and delete program cards and their pages
 - Post public updates with an optional image
 - Email all active subscribers
 
@@ -32,10 +33,14 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 ├── donate.html       # Donation form
 ├── admin.html        # Admin dashboard (noindex)
 ├── admin.js          # Admin logic (auth, tables, compose, broadcast)
+├── admin-programs.js # Admin "programs" tab: add/edit/reorder/hide/delete program cards
+├── program.html      # Program detail page (loads ?slug=... from the database)
+├── programs.js       # Renders home-page program cards and the detail page
+├── programs.css      # Styles for program cards and detail page
+├── programs.sql      # Supabase table, RLS policies and seed data for programs
 ├── app.js            # Shared logic: nav/footer, form handling, API helper, updates feed
 ├── config.js         # Supabase URL and public (publishable) key
-├── style.css         # Main styles
-└── extra.css         # Forms, admin tables, banners and other additions
+└── style.css         # Main styles (forms, admin tables and banners included)
 ```
 
 ## Tech stack
@@ -70,6 +75,7 @@ You'll need a Supabase project with the following.
 | `donations` | `created_at`, `name`, `email`, `amount`, `currency`, `status` |
 | `updates` | `created_at`, `title`, `body`, `image_url`, `published` |
 | `admins` | `user_id` |
+| `programs` | `id`, `slug`, `title`, `summary`, `body`, `icon`, `link_url`, `sort_order`, `published` (run `programs.sql`) |
 
 **Storage:** a public bucket named `updates` for update images.
 
