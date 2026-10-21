@@ -41,3 +41,11 @@
 .row-actions .btn{padding:.3rem .65rem;font-size:.8rem}
 @media(max-width:720px){.program-card{flex-basis:100%;min-width:0}}
 @media(prefers-reduced-motion:reduce){.program-card,.program-icon,.program-arrow{transition:none!important}.program-card:hover,.program-card:focus-within{transform:none}.program-skeleton{animation:none}}
+
+.programs-grid{gap:1.5rem}
+.program-card{background:linear-gradient(145deg,#fff 0%,#fffdfb 100%);box-shadow:0 8px 24px rgba(23,26,36,.04)}
+.program-icon{color:var(--accent);font-size:1.35rem;box-shadow:inset 0 0 0 1px rgba(201,20,50,.08)}
+.program-card h3{font-family:Georgia,"Times New Roman",serif;font-weight:600}
+.program-link{color:var(--accent)}
+.program-arrow{color:var(--accent);background:#fff1f3}
+
