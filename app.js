@@ -43,9 +43,11 @@ document.querySelectorAll("form[data-type]").forEach(f=>{
     last=Date.now();b.disabled=true;set(d.type==="donate"?"Opening secure payment page…":"Sending…");
     try{
       const j=await api(d.type==="donate"?"donate":"submit",d);
-      if(j.link){
-        let u;try{u=new URL(j.link)}catch{}
-        if(!u||u.protocol!=="https:"||!PAYHOST.test(u.hostname))throw new Error("Could not open the payment page safely. Please try again.");
+      const link=j.link||j.url||(j.data&&(j.data.link||j.data.url));
+      if(d.type==="donate"&&!link){console.error("donate response:",j);throw new Error(j.message||j.error||"The payment service did not return a checkout link. Please try again.");}
+      if(link){
+        let u;try{u=new URL(link)}catch{}
+        if(!u||u.protocol!=="https:"||!PAYHOST.test(u.hostname)){console.error("Blocked checkout link:",link);throw new Error("Could not open the payment page safely ("+(u?u.hostname:"invalid link")+"). Please try again.");}
         location.href=u.href;return;
       }
       set(j.message||"Thank you!","ok");f.reset();
