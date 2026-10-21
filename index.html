@@ -2,18 +2,47 @@
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Health, Skills & Innovation — JS Health Initiative East Africa</title>
 <meta name="description" content="A Ugandan non-profit supporting communities through digital skilling, public health education, research and surgical care support.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2750%27 fill=%27%23d31027%27/%3E%3C/svg%3E"><meta name="theme-color" content="#d31027"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="programs.css"></head>
-<body><div id="nav"></div>
-<main id="main"><section class="hero"><div class="container"><p class="eyebrow">Mbarara, Uganda</p>
-<h1>Health, skills, and opportunity for East Africa.</h1>
-<p class="lead">JS Health Initiative East Africa is a non-profit organisation working to support underprivileged communities through digital skilling, public health education, research, and surgical care support.</p>
-<div class="hero-actions"><a href="donate.html" class="btn btn-large">Donate</a><a href="volunteer.html" class="btn btn-large btn-ghost">Volunteer</a></div></div></section>
-<section id="about" class="section"><div class="container"><h2>About us</h2>
-<p class="section-lead">Registered in Uganda as a company limited by guarantee, JS Health Initiative East Africa is on the path to full PNFP/NGO registration. We believe access to health, knowledge, and skills should not depend on where a person is born.</p>
-<div class="stats"><div class="stat"><div class="stat-num">5</div><div class="stat-label">Focus areas</div></div><div class="stat"><div class="stat-num">1</div><div class="stat-label">Region: East Africa</div></div></div></div></section>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2750%27 fill=%27%23d31027%27/%3E%3C/svg%3E"><meta name="theme-color" content="#d31027">
+<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="programs.css"><link rel="stylesheet" href="home.css"></head>
+<body class="home"><div id="nav"></div>
+<main id="main">
+
+<section class="hero"><div class="container">
+  <div class="hero-copy">
+    <p class="eyebrow">Mbarara, Uganda</p>
+    <h1>Health, skills, and opportunity for East Africa.</h1>
+    <p class="lead">JS Health Initiative East Africa is a non-profit organisation working to support underprivileged communities through digital skilling, public health education, research, and surgical care support.</p>
+    <div class="hero-actions"><a href="donate.html" class="btn btn-large">Donate</a><a href="volunteer.html" class="btn btn-large btn-ghost">Volunteer</a></div>
+    <p class="hero-note">Registered in Uganda and on the path to full PNFP/NGO registration.</p>
+  </div>
+
+  <!-- Five pillars arranged as a medical cross. Each tile links to its program page. -->
+  <nav class="plus" aria-label="Our five focus areas">
+    <p class="plus-note">Our five focus areas</p>
+    <a class="tile t-top" href="program.html?slug=research-innovation"><span class="tile-icon" aria-hidden="true">🔬</span>Research &amp; innovation</a>
+    <a class="tile t-left" href="program.html?slug=digital-skilling"><span class="tile-icon" aria-hidden="true">💻</span>Digital skilling</a>
+    <a class="tile t-center" href="program.html?slug=public-health-education"><span class="tile-icon" aria-hidden="true">🩺</span>Public health education</a>
+    <a class="tile t-right" href="program.html?slug=youth-empowerment"><span class="tile-icon" aria-hidden="true">🌱</span>Youth empowerment</a>
+    <a class="tile t-bottom" href="program.html?slug=surgical-care-support"><span class="tile-icon" aria-hidden="true">🏥</span>Surgical care support</a>
+  </nav>
+</div></section>
+
+<section id="about" class="section"><div class="container"><div class="about-grid">
+  <h2>About us</h2>
+  <div>
+    <p class="section-lead">Registered in Uganda as a company limited by guarantee, JS Health Initiative East Africa is on the path to full PNFP/NGO registration. We believe access to health, knowledge, and skills should not depend on where a person is born.</p>
+    <!-- TODO: replace with your real numbers (people reached, volunteers, communities, etc.) -->
+    <div class="stats"><div class="stat"><div class="stat-num">5</div><div class="stat-label">Focus areas</div></div><div class="stat"><div class="stat-num">1</div><div class="stat-label">Region: East Africa</div></div></div>
+  </div>
+</div></div></section>
+
 <section id="activities" class="section section-alt"><div class="container"><h2>What we do</h2><p class="section-lead">Five pillars guide every project we take on.</p>
 <ul id="programs" class="programs-grid"><li class="program-card"><div class="program-icon" aria-hidden="true">💻</div><h3>Digital skilling</h3><p>Practical digital skills for the modern economy.</p><a class="program-link" href="program.html?slug=digital-skilling"><span>Learn more<span class="sr-only"> about Digital skilling</span></span><span class="program-arrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li><li class="program-card"><div class="program-icon" aria-hidden="true">🔬</div><h3>Research &amp; innovation</h3><p>Local research that responds to real challenges in our communities.</p><a class="program-link" href="program.html?slug=research-innovation"><span>Learn more<span class="sr-only"> about Research &amp; innovation</span></span><span class="program-arrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li><li class="program-card"><div class="program-icon" aria-hidden="true">🩺</div><h3>Public health education</h3><p>Critical health awareness delivered at community level.</p><a class="program-link" href="program.html?slug=public-health-education"><span>Learn more<span class="sr-only"> about Public health education</span></span><span class="program-arrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li><li class="program-card"><div class="program-icon" aria-hidden="true">🏥</div><h3>Surgical care support</h3><p>Sourcing and subsidising essential equipment and implants so surgery is within reach.</p><a class="program-link" href="program.html?slug=surgical-care-support"><span>Learn more<span class="sr-only"> about Surgical care support</span></span><span class="program-arrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li><li class="program-card"><div class="program-icon" aria-hidden="true">🌱</div><h3>Youth empowerment</h3><p>Skilling young people to build livelihoods and lead change.</p><a class="program-link" href="program.html?slug=youth-empowerment"><span>Learn more<span class="sr-only"> about Youth empowerment</span></span><span class="program-arrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></li></ul></div></section>
-<section class="section"><div class="container"><h2>Latest updates</h2><div id="updates" class="feature-grid"></div></div></section>
-<section class="section section-alt"><div class="container"><h2>Get involved</h2><p class="section-lead">There are three simple ways to be part of this work.</p><div class="feature-grid"><div class="feature"><div class="feature-icon">❤️</div><h3>Give</h3><p>Support skilling, health education and surgical care with a one-time gift.</p><p><a href="donate.html">Donate →</a></p></div><div class="feature"><div class="feature-icon">🤝</div><h3>Volunteer</h3><p>Share your time and skills with communities that need them.</p><p><a href="volunteer.html">Apply →</a></p></div><div class="feature"><div class="feature-icon">✉️</div><h3>Partner</h3><p>Organisations and institutions are welcome to collaborate with us.</p><p><a href="contact.html">Get in touch →</a></p></div></div></div></section>
+
+<section class="section updates-section"><div class="container"><h2>Latest updates</h2><div id="updates" class="feature-grid"></div></div></section>
+
+<section class="section section-alt"><div class="container"><h2>Get involved</h2><p class="section-lead">There are three simple ways to be part of this work.</p><div class="feature-grid involve"><div class="feature"><div class="feature-icon">❤️</div><h3>Give</h3><p>Support skilling, health education and surgical care with a one-time gift.</p><p><a href="donate.html">Donate →</a></p></div><div class="feature"><div class="feature-icon">🤝</div><h3>Volunteer</h3><p>Share your time and skills with communities that need them.</p><p><a href="volunteer.html">Apply →</a></p></div><div class="feature"><div class="feature-icon">✉️</div><h3>Partner</h3><p>Organisations and institutions are welcome to collaborate with us.</p><p><a href="contact.html">Get in touch →</a></p></div></div></div></section>
+
 <section class="cta"><div class="container"><h2>Let's build healthier communities together.</h2><p>Give, volunteer, or partner with us.</p><a href="donate.html" class="btn btn-large">Donate now</a></div></section>
+
 </main><div id="foot"></div><script src="config.js"></script><script src="app.js"></script><script src="programs.js"></script></body></html>

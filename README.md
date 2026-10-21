@@ -36,6 +36,7 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 ├── admin-programs.js # Admin "programs" tab: add/edit/reorder/hide/delete program cards
 ├── program.html      # Program detail page (loads ?slug=... from the database)
 ├── programs.js       # Renders home-page program cards and the detail page
+├── home.css          # Home page design (hero, focus-area cross, about, closing banner)
 ├── programs.css      # Styles for program cards and detail page
 ├── programs.sql      # Supabase table, RLS policies and seed data for programs
 ├── app.js            # Shared logic: nav/footer, form handling, API helper, updates feed

@@ -1,16 +1,17 @@
-:root{--accent:#d31027;--accent-dark:#a30c1d;--ink:#10131a;--text:#1c212b;--muted:#5b6472;--bg:#fff;--alt:#f6f7f9;--border:#e6e8ec;--tint:#fdecef;--r:14px;--shadow:0 12px 30px rgba(16,19,26,.08)}
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Figtree:wght@400;500;600;700&display=swap");
+:root{--accent:#d31027;--accent-dark:#a30c1d;--ink:#10131a;--text:#1c212b;--muted:#5b6472;--bg:#fff;--alt:#f0f5f3;--border:#d6e0dd;--green:#0f3b36;--green-soft:#1d5a52;--serif:"Fraunces",Georgia,"Times New Roman",serif;--sans:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--tint:#fdecef;--r:14px;--shadow:0 12px 30px rgba(16,19,26,.08)}
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
 html{scroll-behavior:smooth}
-body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);background:var(--bg);line-height:1.65;-webkit-font-smoothing:antialiased}
+body{font-family:var(--sans);color:var(--text);background:var(--bg);line-height:1.65;-webkit-font-smoothing:antialiased}
 img{max-width:100%;display:block}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
 .skip{position:absolute;left:-999px;top:0;background:var(--ink);color:#fff;padding:.6rem 1rem;z-index:99}.skip:focus{left:0}
-.container{max-width:1100px;margin:0 auto;padding:0 1.25rem}
+.container{max-width:1180px;margin:0 auto;padding:0 clamp(1.25rem,5vw,3.5rem)}
 /* nav */
 .nav{position:sticky;top:0;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);z-index:20}
-.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1.25rem;gap:1rem}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding-block:.8rem;gap:1rem}
 .logo{display:flex;align-items:center;gap:.65rem;color:var(--ink);font-weight:700}.logo:hover{text-decoration:none}
 .logo-mark{width:40px;height:40px;display:grid;place-items:center;background:var(--accent);color:#fff;border-radius:50%;font-size:.75rem;font-weight:800}
 .nav-links{display:flex;align-items:center;gap:1.6rem;font-size:.95rem}
@@ -90,3 +91,21 @@ th,td{border-bottom:1px solid var(--border);padding:.6rem .7rem;text-align:left;
  .logo-text{font-size:.9rem}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* ===== Design refresh (site-wide) ===== */
+h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.015em}
+.btn{border-radius:999px;padding:.7rem 1.4rem;font-weight:700}
+.btn-large{padding:.95rem 1.9rem}
+.btn:hover{transform:none}
+.eyebrow{text-transform:none;letter-spacing:0;font-size:.95rem}
+.section-alt{background:var(--alt)}
+.page-head{padding:4rem 0 2.2rem;background:var(--alt);border-bottom:1px solid var(--border)}
+.page-head h1{font-size:clamp(2rem,4.4vw,3rem);letter-spacing:-.025em}
+.page-head+.section{padding-top:3rem}
+.section .container>.stacked-form{max-width:560px;padding:clamp(1.25rem,3vw,2rem);background:#fff;border:1px solid var(--border);border-radius:16px}
+.stacked-form input,.stacked-form textarea,.stacked-form select{border-color:#c5d2ce}
+.contact-card{background:#fff;border-radius:16px}
+.contact-list strong{text-transform:none;letter-spacing:0;font-size:.9rem;color:var(--green)}
+.cta{background:var(--green)}
+.cta .btn{background:var(--accent);color:#fff}.cta .btn:hover{background:var(--accent-dark)}
+footer{background:var(--green);color:#cfe1dd}footer .muted{color:#9fbab4}
