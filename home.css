@@ -139,24 +139,83 @@
 }
 
 @media (max-width: 520px) {
+  .home .hero {
+    min-height: auto;
+    padding: 2.75rem 0 4.5rem;
+  }
+
+  .home .hero-grid {
+    gap: 3rem;
+  }
+
   .home .hero-copy h1 {
-    font-size: clamp(3rem, 15vw, 4.45rem);
+    max-width: 12ch;
+    font-size: clamp(2.85rem, 14vw, 4.2rem);
+    line-height: .98;
   }
 
   .home .hero-copy .lead {
     margin-top: 1.25rem;
+    font-size: .96rem;
+    line-height: 1.6;
+  }
+
+  .home .hero-actions {
+    align-items: stretch;
+    gap: .65rem;
+    margin-top: 1.4rem;
   }
 
   .home .hero-actions .btn {
     width: 100%;
+    min-height: 3.1rem;
+  }
+
+  .home .hero-note {
+    align-items: flex-start;
+    font-size: .72rem;
+    line-height: 1.4;
   }
 
   .home .hero-visual {
-    width: calc(100% - 1rem);
+    width: calc(100% - 1.25rem);
     margin-right: .5rem;
   }
 
+  .home .hero-visual::before {
+    inset: -.8rem -.65rem 0;
+    border-radius: 12rem 12rem 0 0;
+  }
+
+  .home .hero-visual img {
+    aspect-ratio: 4 / 5.35;
+    object-position: 68% center;
+    border-radius: 11rem 11rem 0 0;
+  }
+
   .home .image-caption {
-    left: -.5rem;
+    left: -.65rem;
+    bottom: -.9rem;
+    width: 8rem;
+    padding: .7rem .75rem .8rem;
+    font-size: .82rem;
+  }
+
+  .home .caption-kicker {
+    font-size: .5rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .home .hero {
+    padding-top: 2.25rem;
+  }
+
+  .home .hero-copy h1 {
+    font-size: 2.75rem;
+  }
+
+  .home .hero-grid {
+    gap: 2.5rem;
   }
 }
