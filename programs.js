@@ -8,9 +8,9 @@ const safe=h=>{if(!h)return null;try{const u=new URL(h,location.href);
 const ARROW='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 const card=p=>{
   const href=safe(p.link_url)||"program.html?slug="+encodeURIComponent(p.slug);
-  return `<li class="program-card"><div class="program-icon" aria-hidden="true">${esc(p.icon||"✨")}</div>
-<h3>${esc(p.title)}</h3><p>${esc(p.summary)}</p>
-<a class="program-link" href="${esc(href)}"${/^https:/.test(href)?' rel="noopener"':""}><span>Learn more<span class="sr-only"> about ${esc(p.title)}</span></span><span class="program-arrow">${ARROW}</span></a></li>`};
+  return `<li class="program-card"><div class="program-card-top"><span class="program-number" aria-hidden="true"></span><span class="program-arrow" aria-hidden="true">${ARROW}</span></div>
+<div class="program-card-copy"><h3>${esc(p.title)}</h3><p>${esc(p.summary)}</p></div>
+<a class="program-link" href="${esc(href)}"${/^https:/.test(href)?' rel="noopener"':""}><span class="sr-only">Learn more about ${esc(p.title)}</span></a></li>`};
 
 const grid=$("#programs");
 if(grid)rest("select=slug,title,summary,icon,link_url&published=eq.true&order=sort_order.asc,created_at.asc")
