@@ -30,6 +30,8 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 ├── index.html        # Home page
 ├── volunteer.html    # Volunteer application form
 ├── contact.html      # Contact details and message form
+├── get-involved.html # Journeys for donors, volunteers, partners, communities + partner form
+├── STORY-TEMPLATE.md # Consent checklist and structure for impact stories
 ├── donate.html       # Donation form
 ├── admin.html        # Admin dashboard (noindex)
 ├── admin.js          # Admin logic (auth, tables, compose, broadcast)
@@ -43,7 +45,9 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 ├── style.css         # Main styles (forms, admin tables and banners included)
 ├── vercel.json       # Vercel security headers and the /admin rewrite
 └── supabase/
-    └── programs.sql  # Run once in the Supabase SQL Editor (programs table, RLS, seed data)
+    ├── programs.sql  # Run once in the Supabase SQL Editor (programs table, RLS, seed data)
+    ├── programs-content.sql  # Run after programs.sql: real page text for the five programs
+    └── field-notes-drafts.sql  # Unpublished field-note drafts to fill with real details
 ```
 
 ## Tech stack
