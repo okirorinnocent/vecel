@@ -26,6 +26,7 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 - Manage team members, partner organisations, published services and service-request status
 - Upload or remove team photos and partner logos through the public `team-photos` and `partner-logos` buckets
 - Post public updates with an optional image
+- Delete test updates individually or in bulk from the Updates tab, remove their same-bucket images, and publish/unpublish updates without deleting them
 - Email all active subscribers
 
 ## Project structure
@@ -189,6 +190,10 @@ If the widget remains on “Verifying…”:
 - Open `?analytics_debug=1`, confirm the exact request and response status are logged, and confirm the admin Analytics tab shows tracking health and the 24-hour warning when appropriate.
 - Verify robots.txt, sitemap.xml, canonical/absolute Open Graph metadata, 404 page and Organization JSON-LD.
 - Verify Flutterwave card and UGX mobile-money checkout, invalid amount/currency rejection, webhook signature rejection and idempotent repeated webhooks.
+- In the admin Updates tab, delete one update with an image and one without, bulk-delete updates, cancel the accessible confirmation dialog, and confirm the permanent red button is required.
+- Unpublish and publish an update again; confirm the public homepage hides unpublished updates and no longer shows deleted posts.
+- Confirm the delete success message and heading count update without a reload, while search and pagination remain in place.
+- Confirm a signed-in non-admin cannot delete updates through RLS. Run `supabase/admin-updates-delete.sql` if the existing updates policies do not already grant admin deletes.
 
 ## Customisation
 
