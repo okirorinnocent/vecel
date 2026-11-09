@@ -135,6 +135,27 @@ const showCompose = async v => {
     } catch (error) { form.querySelector(".form-status").textContent = error.message; }
   };
 };
+analyticsAdmin = async function (v) {
+ v.innerHTML = `<h2>Analytics</h2><label>Range <select id="analytics-range"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option></select></label><div id="analytics-output">Loading...</div>`;
+ const load = async () => {
+   const days = Number($("#analytics-range").value), since = new Date(Date.now() - days * 86400000).toISOString();
+   const [summary, health, anonymous] = await Promise.all([
+     sb.rpc("analytics_admin_summary", { p_since: since }),
+     sb.rpc("analytics_tracking_health"),
+     sb.rpc("analytics_anonymous_summary", { p_since: since })
+   ]);
+   if (summary.error) { $("#analytics-output").textContent = `Could not load analytics: ${summary.error.message}`; return; }
+   const data = summary.data || {}, h = health.data || {}, a = anonymous.data || {}, last = h.last_event ? new Date(h.last_event) : null;
+   const list = (items, key) => `<ul>${(items || []).map(x => `<li>${esc(x[key] ?? "unknown")}: ${esc(x.count)}</li>`).join("") || "<li>None</li>"}</ul>`;
+   const daily = data.daily || [], max = Math.max(1, ...daily.map(x => Number(x.count)));
+   const bars = daily.map((x, i) => `<rect x="${i * 22}" y="${100 - (Number(x.count) / max * 90)}" width="16" height="${Number(x.count) / max * 90}"></rect>`).join("");
+   const stale = !last || Date.now() - last.getTime() > 86400000;
+   $("#analytics-output").innerHTML = `<section class="analytics-stats"><h3>Tracking health</h3><p><b>Last recorded event:</b> ${esc(last ? last.toLocaleString() : "Never")}</p><p><b>Events in the last hour:</b> ${esc(h.events_last_hour || 0)}</p>${stale ? '<p class="form-status">Warning: no event has arrived in the last 24 hours.</p>' : ""}</section><p><b>Anonymous (no cookies):</b> ${esc(a.views || 0)} page views in this range. Confirm this aggregate in the privacy policy before production use.</p><button class="btn btn-ghost" id="analytics-export">Export recent events CSV</button><div class="analytics-stats"><p><b>Total visitors:</b> ${esc(data.total_visitors)}</p><p><b>New:</b> ${esc(data.new_visitors)}</p><p><b>Returning:</b> ${esc(data.returning_visitors)}</p><p><b>Page views:</b> ${esc(data.page_views)}</p><p><b>Consent accepted:</b> ${esc(data.consent_accepted)}</p><p><b>Consent rejected:</b> ${esc(data.consent_rejected)}</p></div><div class="analytics-columns"><section><h3>Top pages</h3>${list(data.top_pages, "path")}</section><section><h3>Referrers</h3>${list(data.top_referrers, "referrer")}</section><section><h3>Countries</h3>${list(data.countries, "country")}</section><section><h3>Devices</h3>${list(data.devices, "device")}</section><section><h3>Browsers</h3>${list(data.browsers, "browser")}</section></div><h3>Daily page views</h3><svg class="analytics-chart" viewBox="0 0 ${Math.max(220, daily.length * 22)} 110" role="img" aria-label="Daily page views">${bars}</svg><h3>Recent events</h3><div class="scroll"><table><tr><th>Time</th><th>Event</th><th>Path</th><th>Country</th></tr>${(data.recent_events || []).map(x => `<tr><td>${esc(new Date(x.created_at).toLocaleString())}</td><td>${esc(x.event)}</td><td>${esc(x.path)}</td><td>${esc(x.country || "unknown")}</td></tr>`).join("")}</table></div>`;
+   $("#analytics-export").onclick = () => csvDownload("analytics-events.csv", [["created_at", "event", "path", "country"], ...(data.recent_events || []).map(x => [x.created_at, x.event, x.path, x.country || ""])]);
+ };
+ $("#analytics-range").onchange = load;
+ await load();
+};
 show = async function (t) {
   mark(t);
   const v = $("#view");

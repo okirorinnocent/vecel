@@ -101,7 +101,7 @@ You'll need a Supabase project with the following.
 
 **Storage:** public buckets named `updates`, `team-photos` and `partner-logos`; admin write policies should protect all three.
 
-**Edge Functions:** `submit`, `track` and `donate` (store secrets such as the Flutterwave secret key, Turnstile secret and email provider key as Supabase function secrets, never in this repo).
+**Edge Functions:** `submit`, `collect` (with `track` compatibility), `track` and `donate` (store secrets such as the Flutterwave secret key, Turnstile secret and email provider key as Supabase function secrets, never in this repo).
 
 **Row Level Security:** enable RLS on every table. Public visitors should only be able to read published `updates`; all other reads and writes should be limited to admins or handled by the Edge Functions. The `admins` check in `admin.js` is only a UI gate, so RLS is what actually protects your data.
 
@@ -147,11 +147,18 @@ Deploy the service-request changes with:
 
 ```bash
 supabase functions deploy submit
-supabase functions deploy track
+supabase functions deploy track --no-verify-jwt
+supabase functions deploy collect --no-verify-jwt
 supabase functions deploy donate
 ```
 
-Run `supabase/production-fixes.sql` once. Set these Supabase Function secrets: `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL`, `SITE_URL`, `IP_HASH_SALT`, `TURNSTILE_SECRET`, `FLW_SECRET_KEY`, and `FLW_WEBHOOK_HASH` (or `FLW_SECRET_HASH`). Set the public Turnstile site key as `CFG.TURNSTILE_SITEKEY` in `config.js`. Never put the service-role key or provider secrets in frontend files.
+Run `supabase/production-fixes.sql` and `supabase/analytics-collect.sql` once. Set these Supabase Function secrets: `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL`, `SITE_URL`, `ALLOWED_ORIGINS` (comma-separated `https://jshealthinitiative.com,https://www.jshealthinitiative.com,https://js-health-initiative-east-africa.vercel.app`), `IP_HASH_SALT`, `TURNSTILE_SECRET`, `FLW_SECRET_KEY`, and `FLW_WEBHOOK_HASH` (or `FLW_SECRET_HASH`). Set the public Turnstile site key as `CFG.TURNSTILE_SITEKEY` in `config.js`. Never put the service-role key or provider secrets in frontend files.
+
+### Analytics debugging
+
+The browser sends analytics to `/functions/v1/collect`; `/functions/v1/track` remains available as a fallback. Open any public page with `?analytics_debug=1` to log the consent state, DNT/GPC decision, exact request payload, endpoint fallback and response status. Test both the `www` and non-`www` domains, and add every deployed hostname to `ALLOWED_ORIGINS`. Analytics is never sent from `admin.html`.
+
+The collector fails open when the rate-limit RPC is unavailable, but logs the error. It uses a salted IP hash only for limiting and stores no raw IP. Cookieless page views are daily aggregates with no visitor ID; confirm that this approach is covered by the privacy policy before enabling it in production.
 
 ### Cloudflare Turnstile debugging
 
@@ -178,6 +185,8 @@ If the widget remains on “Verifying…”:
 - Confirm public form limits (10/hour/type), subscription action limits (20/hour), email confirmation limit (3/address/day), and that admin broadcasts are not blocked by public limits.
 - Run two concurrent broadcast processors and confirm each recipient is claimed once; verify stale `sending` rows are reclaimed after 10 minutes.
 - Accept, reject and withdraw cookie consent; verify consent analytics records and deletion of visitor/session identifiers when rejected.
+- Accept and reject on a phone, test Brave and an ad blocker, and verify `collect` works on both `www` and non-`www` domains.
+- Open `?analytics_debug=1`, confirm the exact request and response status are logged, and confirm the admin Analytics tab shows tracking health and the 24-hour warning when appropriate.
 - Verify robots.txt, sitemap.xml, canonical/absolute Open Graph metadata, 404 page and Organization JSON-LD.
 - Verify Flutterwave card and UGX mobile-money checkout, invalid amount/currency rejection, webhook signature rejection and idempotent repeated webhooks.
 
