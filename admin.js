@@ -111,10 +111,17 @@ const deleteRecords = async ({ table, records, view, removeRecord }) => {
   const cancel = dialog.querySelector("[data-cancel]");
   const confirm = dialog.querySelector("[data-delete]");
   const status = dialog.querySelector(".form-status");
+  const closeDialog = () => {
+    if (typeof dialog.close === "function") dialog.close();
+    else {
+      dialog.removeAttribute("open");
+      dialog.remove();
+    }
+  };
   const focusable = () => [...dialog.querySelectorAll("button:not([disabled]), [href], input, select, textarea")];
   const focusFirst = () => focusable()[0]?.focus();
   const onKeyDown = event => {
-    if (event.key === "Escape") { event.preventDefault(); dialog.close(); return; }
+    if (event.key === "Escape") { event.preventDefault(); closeDialog(); return; }
     if (event.key !== "Tab") return;
     const items = focusable();
     if (!items.length) return;
@@ -122,7 +129,7 @@ const deleteRecords = async ({ table, records, view, removeRecord }) => {
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   };
-  cancel.addEventListener("click", () => { dialog.close(); dialog.remove(); });
+  cancel.addEventListener("click", closeDialog);
   confirm.addEventListener("click", async () => {
     confirm.disabled = true;
     cancel.disabled = true;
@@ -146,7 +153,7 @@ const deleteRecords = async ({ table, records, view, removeRecord }) => {
         await auditAdmin(table, "delete", record.id, { title: record.title, email: session.session.user.email || "" });
         removeRecord(record);
       }
-      dialog.close();
+      closeDialog();
       dialog.remove();
       view.querySelector(".form-status")?.replaceChildren();
       const notice = document.createElement("p");
@@ -162,7 +169,8 @@ const deleteRecords = async ({ table, records, view, removeRecord }) => {
   });
   dialog.addEventListener("keydown", onKeyDown);
   dialog.addEventListener("close", () => { if (dialog.isConnected) dialog.remove(); });
-  dialog.showModal();
+  if (typeof dialog.showModal === "function") dialog.showModal();
+  else dialog.setAttribute("open", "");
   focusFirst();
 };
 const tableAdmin = async (view, tableName) => {
