@@ -17,8 +17,20 @@
     fetch(`${CFG.SUPA}/functions/v1/track`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ visitor_id: visitor, session_id: session, event, path: location.pathname.slice(0, 200), title: document.title.slice(0, 150), referrer_domain: referrer, screen: `${Math.min(screen.width, 1920)}x${Math.min(screen.height, 1920)}`, language: navigator.language, device: getDevice(), browser: getBrowser(), os: getOs(), consent_version: VERSION, ...meta }), keepalive: true }).catch(() => {});
   };
   window.jhieTrack = track;
+  const removeAnalytics = () => {
+    write("jhie_vid", "", 0);
+    sessionStorage.removeItem("jhie_sid");
+  };
+  const sendConsent = analytics => {
+    if (!window.CFG) return;
+    const visitor = analytics ? read("jhie_vid") || crypto.randomUUID() : null;
+    if (analytics && !read("jhie_vid")) write("jhie_vid", visitor, 31536000);
+    fetch(`${CFG.SUPA}/functions/v1/track`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event: "consent", visitor_id: visitor, analytics, consent_version: VERSION }), keepalive: true }).catch(() => {});
+  };
   const setChoice = analytics => {
+    if (!analytics) removeAnalytics();
     write("jhie_consent", JSON.stringify({ version: VERSION, analytics }), 31536000);
+    sendConsent(analytics);
     document.querySelector(".cookie-consent")?.remove();
     if (analytics) track("page_view");
   };
@@ -30,6 +42,6 @@
     document.body.appendChild(banner);
     banner.onclick = event => { const choice = event.target.dataset.consent; if (choice === "accept") setChoice(true); if (choice === "reject") setChoice(false); if (choice === "customize") { banner.querySelector(".cookie-actions").innerHTML = `<button class="btn" data-consent="save">Allow analytics</button><button class="btn btn-ghost" data-consent="reject">Essential only</button>`; } if (event.target.dataset.consent === "save") setChoice(true); };
   };
-  window.jhieCookieSettings = () => { write("jhie_consent", "", 0); show(); };
+  window.jhieCookieSettings = () => { removeAnalytics(); write("jhie_consent", "", 0); show(); };
   document.addEventListener("DOMContentLoaded", () => { show(); if (allowed()) track("page_view"); document.querySelector("#change-cookie-settings")?.addEventListener("click", () => window.jhieCookieSettings()); document.querySelectorAll('a[href="donate.html"]').forEach(a => a.addEventListener("click", () => track("donate_click"))); });
 })();

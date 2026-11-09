@@ -2,15 +2,15 @@
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Volunteer — JS Health Initiative East Africa</title>
 <meta name="description" content="Volunteer with JS Health Initiative East Africa in biomedical engineering, healthcare equipment training, maintenance and technical support.">
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><meta name="theme-color" content="#123f39"><link rel="stylesheet" href="style.css"><meta property="og:image" content="assets/logo-icon.svg">
-</head>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><meta name="theme-color" content="#123f39"><link rel="stylesheet" href="style.css"><meta property="og:image" content="https://www.jshealthinitiative.com/assets/og-image.jpg">
+<meta property="og:url" content="https://www.jshealthinitiative.com/volunteer.html"><meta name="twitter:card" content="summary_large_image"><link rel="canonical" href="https://www.jshealthinitiative.com/volunteer.html"></head>
 <body><div id="nav"></div>
 <main id="main"><section class="page-head"><div class="container"><h1>Volunteer with us</h1></div></section>
 <section class="section"><div class="container">
-<form class="stacked-form" data-type="volunteer" novalidate>
+<form class="stacked-form" data-type="volunteer" data-turnstile novalidate><div class="cf-turnstile" aria-label="Security check"></div>
 <label>Full name<input name="name" maxlength="100" autocomplete="name" required></label>
 <label>Email<input name="email" type="email" maxlength="254" autocomplete="email" required></label>
 <label>Phone (optional)<input name="phone" type="tel" maxlength="30"></label>
 <label>Biomedical engineering skills / how you'd like to help<textarea name="skills" rows="5" maxlength="3000" placeholder="For example: equipment user training, preventive maintenance, electrical safety, repairs, calibration or documentation" required></textarea></label>
 <button class="btn btn-large">Submit application</button><p class="form-status" role="status" aria-live="polite"></p></form></div></section>
-</main><div id="foot"></div><script src="config.js"></script><script src="consent.js"></script><script src="app.js"></script></body></html>
+</main><div id="foot"></div><script src="config.js"></script><script src="consent.js"></script><script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script><script src="turnstile.js"></script><script src="app.js"></script></body></html>

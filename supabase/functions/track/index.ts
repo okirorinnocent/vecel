@@ -16,14 +16,25 @@ Deno.serve(async request => {
   if (request.headers.get("Origin") !== ORIGIN) return json({ error: "Origin not allowed." }, 403);
   if (request.method !== "POST" || Number(request.headers.get("content-length") ?? 0) > 8000) return json({ error: "Invalid request." }, 400);
   const body = await request.json().catch(() => null);
-  if (!body || !validId(body.visitor_id) || !validId(body.session_id)) return json({ error: "Invalid analytics payload." }, 400);
+  if (!body || (body.event !== "consent" && (!validId(body.visitor_id) || !validId(body.session_id)))) return json({ error: "Invalid analytics payload." }, 400);
   const ua = request.headers.get("user-agent") ?? "";
   if (/bot|crawler|spider|headless/i.test(ua)) return json({ ok: true });
-  if (!(await db.rpc("consume_rate_limit", { p_key: `${await hashIp(request)}:track`, p_limit: 120, p_window_seconds: 3600 })).data) return json({ error: "Rate limited." }, 429);
-  const allowedEvents = ["page_view","donate_click","volunteer_submit","subscribe"];
-  if (!allowedEvents.includes(body.event) || typeof body.path !== "string" || body.path.length > 200) return json({ error: "Invalid event." }, 400);
-  const visitor = { visitor_id: body.visitor_id, last_seen: new Date().toISOString(), country: (request.headers.get("cf-ipcountry") ?? "").slice(0, 8), device: String(body.device ?? "unknown").slice(0, 30), browser: String(body.browser ?? "unknown").slice(0, 30), os: String(body.os ?? "unknown").slice(0, 30), consent_version: String(body.consent_version ?? "1").slice(0, 20) };
-  await db.from("analytics_visitors").upsert(visitor, { onConflict: "visitor_id" });
-  await db.from("analytics_events").insert({ visitor_id: body.visitor_id, session_id: body.session_id, event: body.event, path: body.path, referrer_domain: typeof body.referrer_domain === "string" ? body.referrer_domain.slice(0, 120) : null, meta: { screen: String(body.screen ?? "").slice(0, 20), language: String(body.language ?? "").slice(0, 20) } });
-  return json({ ok: true });
+  try {
+    const limited = await db.rpc("consume_rate_limit", { p_key: `${await hashIp(request)}:track`, p_limit: 120, p_window_seconds: 3600 });
+    if (!limited.error && limited.data === false) return json({ error: "Rate limited." }, 429);
+    if (body.event === "consent") {
+      const analytics = body.analytics === true;
+      await db.from("cookie_consents").insert({ visitor_id: analytics && validId(body.visitor_id) ? body.visitor_id : null, analytics, version: String(body.consent_version ?? "1").slice(0, 20) });
+      return json({ ok: true });
+    }
+    const allowedEvents = ["page_view", "donate_click", "volunteer_submit", "subscribe", "form_submit"];
+    if (!allowedEvents.includes(body.event) || typeof body.path !== "string" || body.path.length > 200) return json({ error: "Invalid event." }, 400);
+    const visitor = { visitor_id: body.visitor_id, last_seen: new Date().toISOString(), country: (request.headers.get("cf-ipcountry") ?? "").slice(0, 8), device: String(body.device ?? "unknown").slice(0, 30), browser: String(body.browser ?? "unknown").slice(0, 30), os: String(body.os ?? "unknown").slice(0, 30), consent_version: String(body.consent_version ?? "1").slice(0, 20) };
+    await db.from("analytics_visitors").upsert(visitor, { onConflict: "visitor_id" });
+    await db.from("analytics_events").insert({ visitor_id: body.visitor_id, session_id: body.session_id, event: body.event, path: body.path, referrer_domain: typeof body.referrer_domain === "string" ? body.referrer_domain.slice(0, 120) : null, meta: { screen: String(body.screen ?? "").slice(0, 20), language: String(body.language ?? "").slice(0, 20), title: String(body.title ?? "").slice(0, 150) } });
+    return json({ ok: true });
+  } catch (error) {
+    console.error(error);
+    return json({ ok: true });
+  }
 });

@@ -1,5 +1,5 @@
 const sb=supabase.createClient(CFG.SUPA,CFG.KEY);
-const T={applications:["created_at","name","email","phone","skills","status"],messages:["created_at","name","email","message","status"],subscribers:["created_at","email","active"],donations:["created_at","name","email","amount","currency","status"],updates:["created_at","title"],email_log:["created_at","to_email","subject","kind","ok","error"],broadcasts:["created_at","subject","status","sent_count","failed_count","total_count"]};
+const T={applications:["created_at","name","email","phone","skills","status"],messages:["created_at","name","email","message","status"],subscribers:["created_at","email","active"],donations:["created_at","name","email","amount","currency","status"],updates:["created_at","title"],email_log:["created_at","to_email","subject","kind","ok","error"],broadcasts:["created_at","subject","status","sent_count","failed_count","total_count"],audit_log:["created_at","user_id","action","table_name","record_id","changes"]};
 const ST=["new","reviewed","contacted","done"];let cur="applications";
 const MAXIMG=3*1024*1024;
 async function boot(){
@@ -8,7 +8,7 @@ async function boot(){
   const{data,error}=await sb.from("admins").select("user_id").eq("user_id",session.user.id).maybeSingle();
   if(error||!data){await sb.auth.signOut();$("#login").hidden=false;$("#panel").hidden=true;$("#ls").textContent="This account is not an admin.";return}
   $("#login").hidden=true;$("#panel").hidden=false;
-  $("#tabs").innerHTML=[...Object.keys(T),"programs","team","partners","services","service requests","compose","analytics"].map(k=>`<button class="btn btn-ghost" data-t="${k}">${k}</button>`).join("");
+  $("#tabs").innerHTML=[...Object.keys(T),"programs","team","partners","services","service requests","compose","analytics"].map(k=>`<button class="btn btn-ghost" data-t="${k}">${k==="audit_log"?"audit log":k}</button>`).join("");
   const { count: newRequests } = await sb.from("service_requests").select("id", { count: "exact", head: true }).eq("status", "new");
   const requestTab = [...$("#tabs").querySelectorAll("button")].find(button => button.dataset.t === "service requests");
   if (requestTab && newRequests) requestTab.innerHTML = `service requests <span class="badge">${esc(newRequests)}</span>`;
@@ -77,4 +77,74 @@ async function analyticsAdmin(v){
   const load=async()=>{const days=Number($("#analytics-range").value),since=new Date(Date.now()-days*86400000).toISOString(),{data,error}=await sb.rpc("analytics_admin_summary",{p_since:since});if(error){v.querySelector("#analytics-output").textContent="Could not load analytics: "+error.message;return}const out=v.querySelector("#analytics-output"),list=(items,key)=>`<ul>${(items||[]).map(x=>`<li>${esc(x[key]??"unknown")}: ${esc(x.count)}</li>`).join("")||"<li>None</li>"}</ul>`,daily=data.daily||[],max=Math.max(1,...daily.map(x=>Number(x.count))),bars=daily.map((x,i)=>`<rect x="${i*22}" y="${100-(Number(x.count)/max*90)}" width="16" height="${Number(x.count)/max*90}" aria-label="${esc(x.day)} ${esc(x.count)}"></rect>`).join("");out.innerHTML=`<button class="btn btn-ghost" id="analytics-export">Export recent events CSV</button><div class="analytics-stats"><p><b>Total visitors:</b> ${esc(data.total_visitors)}</p><p><b>New:</b> ${esc(data.new_visitors)}</p><p><b>Returning:</b> ${esc(data.returning_visitors)}</p><p><b>Page views:</b> ${esc(data.page_views)}</p><p><b>Consent accepted:</b> ${esc(data.consent_accepted)}</p><p><b>Consent rejected:</b> ${esc(data.consent_rejected)}</p></div><div class="analytics-columns"><section><h3>Top pages</h3>${list(data.top_pages,"path")}</section><section><h3>Referrers</h3>${list(data.top_referrers,"referrer")}</section><section><h3>Countries</h3>${list(data.countries,"country")}</section><section><h3>Devices</h3>${list(data.devices,"device")}</section><section><h3>Browsers</h3>${list(data.browsers,"browser")}</section></div><h3>Daily page views</h3><svg class="analytics-chart" viewBox="0 0 ${Math.max(220,daily.length*22)} 110" role="img" aria-label="Daily page views">${bars}</svg><h3>Recent events</h3><div class="scroll"><table><tr><th>Time</th><th>Event</th><th>Path</th><th>Country</th></tr>${(data.recent_events||[]).map(x=>`<tr><td>${esc(new Date(x.created_at).toLocaleString())}</td><td>${esc(x.event)}</td><td>${esc(x.path)}</td><td>${esc(x.country||"unknown")}</td></tr>`).join("")}</table></div>`;v.querySelector("#analytics-export").onclick=()=>{const rows=[["created_at","event","path","country"],...(data.recent_events||[]).map(x=>[x.created_at,x.event,x.path,x.country||""])];const csv=rows.map(row=>row.map(value=>`"${String(value).replace(/"/g,'""')}"`).join(",")).join("\\n");const link=document.createElement("a");link.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));link.download="analytics-events.csv";link.click();URL.revokeObjectURL(link.href);};};
   $("#analytics-range").onchange=load;await load();
 }
+const auditAdmin = async (tableName, action, recordId, changes) => {
+  const { data: session } = await sb.auth.getSession();
+  await sb.from("admin_audit_log").insert({ user_id: session.session?.user.id, action, table_name: tableName, record_id: recordId || null, changes });
+};
+window.jhieAudit = auditAdmin;
+const csvDownload = (name, rows) => {
+  const csv = rows.map(row => row.map(value => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  link.download = name;
+  link.click();
+  URL.revokeObjectURL(link.href);
+};
+const tableAdmin = async (view, tableName) => {
+  const columns = T[tableName], query = sb.from(tableName).select("*").order("created_at", { ascending: false }).limit(1000);
+  const { data, error } = await query;
+  if (error) { view.textContent = `Could not load ${tableName}: ${error.message}`; return; }
+  const pageSize = 25;
+  const draw = (page = 1) => {
+    const search = String(view.querySelector("#table-search")?.value || "").toLowerCase();
+    const rows = data.filter(row => tableName !== "email_log" || row.ok === false).filter(row => !search || columns.some(column => String(row[column] ?? "").toLowerCase().includes(search)));
+    const pages = Math.max(1, Math.ceil(rows.length / pageSize)), current = Math.min(page, pages), shown = rows.slice((current - 1) * pageSize, current * pageSize);
+    const status = tableName === "applications" || tableName === "messages";
+    view.querySelector("#table-output").innerHTML = `<div class="scroll"><table><thead><tr>${columns.map(column => `<th>${esc(column.replace("_", " "))}</th>`).join("")}</tr></thead><tbody>${shown.map(row => `<tr>${columns.map(column => column === "status" && status ? `<td><select data-id="${esc(row.id)}" data-prev="${esc(row.status)}">${ST.map(item => `<option ${item === row.status ? "selected" : ""}>${item}</option>`).join("")}</select></td>` : `<td>${esc(column === "created_at" ? new Date(row[column]).toLocaleString() : row[column])}</td>`).join("")}</tr>`).join("")}</tbody></table></div><p class="muted">Page ${current} of ${pages} · ${rows.length} matching records</p><button class="btn btn-ghost" id="prev-page" ${current === 1 ? "disabled" : ""}>Previous</button> <button class="btn btn-ghost" id="next-page" ${current === pages ? "disabled" : ""}>Next</button>`;
+    view.querySelector("#prev-page").onclick = () => draw(current - 1);
+    view.querySelector("#next-page").onclick = () => draw(current + 1);
+    view.querySelectorAll("select[data-id]").forEach(select => select.onchange = async () => {
+      const { error: updateError } = await sb.from(tableName).update({ status: select.value }).eq("id", select.dataset.id);
+      if (updateError) { alert(`Update failed: ${updateError.message}`); select.value = select.dataset.prev; return; }
+      await auditAdmin(tableName, "status_updated", select.dataset.id, { status: select.value });
+      select.dataset.prev = select.value;
+    });
+  };
+  view.innerHTML = `<h2>${esc(tableName === "email_log" ? "Failed email log" : tableName.replace("_", " "))} (${data.length})</h2><p><input id="table-search" type="search" placeholder="Search records" aria-label="Search records"> <button class="btn btn-ghost" id="table-export">Export CSV</button></p><div id="table-output"></div>`;
+  view.querySelector("#table-search").oninput = () => draw(1);
+  view.querySelector("#table-export").onclick = () => csvDownload(`${tableName}.csv`, [columns, ...data.filter(row => tableName !== "email_log" || row.ok === false).map(row => columns.map(column => row[column]))]);
+  draw();
+};
+const showCompose = async v => {
+  v.innerHTML = `<h2>Post an update</h2><form id="up" class="stacked-form"><label>Title<input name="title" required maxlength="150"></label><label>Text<textarea name="body" rows="4" required maxlength="3000"></textarea></label><button class="btn">Publish update</button><p class="form-status" role="status"></p></form><h2>Email all subscribers</h2><form id="bc" class="stacked-form"><label>Subject<input name="subject" required maxlength="150"></label><label>Message<textarea name="message" rows="5" required maxlength="5000"></textarea></label><button class="btn">Queue broadcast</button><p class="form-status" role="status"></p></form>`;
+  v.querySelector("#up").onsubmit = async event => {
+    event.preventDefault();
+    const form = event.target, values = Object.fromEntries(new FormData(form));
+    const { error } = await sb.from("updates").insert({ title: String(values.title).trim(), body: String(values.body).trim(), published: true });
+    form.querySelector(".form-status").textContent = error ? error.message : "Published.";
+    if (!error) { await auditAdmin("updates", "created", null, { title: values.title }); form.reset(); }
+  };
+  v.querySelector("#bc").onsubmit = async event => {
+    event.preventDefault();
+    const form = event.target, values = Object.fromEntries(new FormData(form));
+    try {
+      const { data: session } = await sb.auth.getSession();
+      const result = await api("submit", { type: "broadcast", subject: String(values.subject).trim(), message: String(values.message).trim(), idempotency_key: crypto.randomUUID() }, session.session?.access_token);
+      form.querySelector(".form-status").textContent = result.message;
+      form.reset();
+    } catch (error) { form.querySelector(".form-status").textContent = error.message; }
+  };
+};
+show = async function (t) {
+  mark(t);
+  const v = $("#view");
+  if (t === "programs") return programsAdmin(v);
+  if (t === "team") return teamAdmin(v);
+  if (t === "partners") return partnersAdmin(v);
+  if (t === "services") return servicesAdmin(v);
+  if (t === "service requests") return serviceRequestsAdmin(v);
+  if (t === "analytics") return analyticsAdmin(v);
+  if (t === "compose") return showCompose(v);
+  if (T[t]) return tableAdmin(v, t);
+};
 boot();

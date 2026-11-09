@@ -101,7 +101,7 @@ You'll need a Supabase project with the following.
 
 **Storage:** public buckets named `updates`, `team-photos` and `partner-logos`; admin write policies should protect all three.
 
-**Edge Functions:** `submit` and `donate` (store secrets such as the Flutterwave secret key and your email provider key as Supabase function secrets, never in this repo).
+**Edge Functions:** `submit`, `track` and `donate` (store secrets such as the Flutterwave secret key, Turnstile secret and email provider key as Supabase function secrets, never in this repo).
 
 **Row Level Security:** enable RLS on every table. Public visitors should only be able to read published `updates`; all other reads and writes should be limited to admins or handled by the Edge Functions. The `admins` check in `admin.js` is only a UI gate, so RLS is what actually protects your data.
 
@@ -147,9 +147,11 @@ Deploy the service-request changes with:
 
 ```bash
 supabase functions deploy submit
+supabase functions deploy track
+supabase functions deploy donate
 ```
 
-Set these Supabase Function secrets: `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL`, `SITE_URL`, and `IP_HASH_SALT`. Never put the service-role key or email-provider secrets in frontend files.
+Run `supabase/production-fixes.sql` once. Set these Supabase Function secrets: `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL`, `SITE_URL`, `IP_HASH_SALT`, `TURNSTILE_SECRET`, `FLW_SECRET_KEY`, and `FLW_WEBHOOK_HASH` (or `FLW_SECRET_HASH`). Set the public Turnstile site key as `TURNSTILE_SITE_KEY` in `config.js`. Never put the service-role key or provider secrets in frontend files.
 
 ## Test checklist
 
@@ -158,6 +160,12 @@ Set these Supabase Function secrets: `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAI
 - Upload valid and oversized team photos and partner logos; confirm invalid types are rejected and removal clears the URL.
 - Submit a service request and confirm the database row, visitor confirmation email and admin notification.
 - In the admin service-requests tab, filter by status, update a status and export CSV.
+- Complete Turnstile on contact, volunteer, partner, service-request and subscribe forms; reject requests with missing/invalid tokens.
+- Confirm public form limits (10/hour/type), subscription action limits (20/hour), email confirmation limit (3/address/day), and that admin broadcasts are not blocked by public limits.
+- Run two concurrent broadcast processors and confirm each recipient is claimed once; verify stale `sending` rows are reclaimed after 10 minutes.
+- Accept, reject and withdraw cookie consent; verify consent analytics records and deletion of visitor/session identifiers when rejected.
+- Verify robots.txt, sitemap.xml, canonical/absolute Open Graph metadata, 404 page and Organization JSON-LD.
+- Verify Flutterwave card and UGX mobile-money checkout, invalid amount/currency rejection, webhook signature rejection and idempotent repeated webhooks.
 
 ## Customisation
 

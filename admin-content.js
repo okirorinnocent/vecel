@@ -45,19 +45,20 @@
           if (options.selects) Object.assign(dataToSave, options.selects(form));
           const result = row ? await sb.from(tableName).update(dataToSave).eq("id", row.id) : await sb.from(tableName).insert(dataToSave);
           if (result.error) throw result.error;
+          await window.jhieAudit?.(tableName, row ? "updated" : "created", row?.id, dataToSave);
           await contentAdmin(view, tableName, title, fields, columns, options);
         } catch (error) { form.querySelector(".form-status").textContent = error.message; }
       };
     };
     view.querySelector("#new-content")?.addEventListener("click", () => open(null));
     view.querySelectorAll(".edit-row").forEach(button => button.onclick = () => open(data.find(row => row.id === button.dataset.id)));
-    view.querySelectorAll(".delete-row").forEach(button => button.onclick = async () => { if (!confirm("Delete this item?")) return; const { error: deleteError } = await sb.from(tableName).delete().eq("id", button.dataset.id); if (deleteError) alert(deleteError.message); else contentAdmin(view, tableName, title, fields, columns, options); });
+    view.querySelectorAll(".delete-row").forEach(button => button.onclick = async () => { if (!confirm("Delete this item?")) return; const { error: deleteError } = await sb.from(tableName).delete().eq("id", button.dataset.id); if (deleteError) alert(deleteError.message); else { await window.jhieAudit?.(tableName, "deleted", button.dataset.id, {}); contentAdmin(view, tableName, title, fields, columns, options); } });
     view.querySelectorAll(".move-row").forEach(button => button.onclick = async () => {
       const index = data.findIndex(row => row.id === button.dataset.id), other = data[index + Number(button.dataset.dir)];
       if (!other) return;
       const first = await sb.from(tableName).update({ sort_order: other.sort_order }).eq("id", data[index].id);
       const second = await sb.from(tableName).update({ sort_order: data[index].sort_order }).eq("id", other.id);
-      if (first.error || second.error) alert("Could not reorder items."); else contentAdmin(view, tableName, title, fields, columns, options);
+      if (first.error || second.error) alert("Could not reorder items."); else { await window.jhieAudit?.(tableName, "reordered", data[index].id, { sort_order: other.sort_order }); contentAdmin(view, tableName, title, fields, columns, options); }
     });
   }
   const teamFields = [["name", "Name", "text"], ["role_title", "Role title", "text"], ["department", "Department", "text"], ["bio", "Bio", "textarea"], ["email", "Email", "email"], ["phone", "Phone", "tel"], ["linkedin_url", "LinkedIn URL", "url"], ["sort_order", "Sort order", "number"], ["published", "Published", "checkbox"], ["show_email", "Show email (only with consent)", "checkbox"], ["show_phone", "Show phone (only with consent)", "checkbox"], ["photo", "Photo (JPG, PNG or WebP; max 2 MB)", "file"]];
@@ -71,7 +72,7 @@
     const { data, error } = await (status === "all" ? query : query.eq("status", status));
     if (error) { view.textContent = `Could not load service requests: ${error.message}`; return; }
     view.innerHTML = `<h2>Service requests (${data.length})</h2><p><label>Filter <select id="request-filter"><option value="all">All</option>${["new", "reviewed", "contacted", "done"].map(x => `<option ${x === status ? "selected" : ""}>${x}</option>`).join("")}</select></label> <button class="btn btn-ghost" id="requests-csv">Export CSV</button></p>${table(data, [["created_at", "Created"], ["facility_name", "Facility"], ["district", "District"], ["contact_name", "Contact"], ["email", "Email"], ["service_type", "Service"], ["status", "Status"]], false)} `;
-    view.querySelectorAll("tbody tr").forEach((row, index) => { const cell = row.children[6]; cell.innerHTML = `<select data-id="${esc(data[index].id)}">${["new", "reviewed", "contacted", "done"].map(x => `<option ${x === data[index].status ? "selected" : ""}>${x}</option>`).join("")}</select>`; cell.querySelector("select").onchange = async event => { const { error: updateError } = await sb.from("service_requests").update({ status: event.target.value }).eq("id", event.target.dataset.id); if (updateError) alert(updateError.message); }; });
+    view.querySelectorAll("tbody tr").forEach((row, index) => { const cell = row.children[6]; cell.innerHTML = `<select data-id="${esc(data[index].id)}">${["new", "reviewed", "contacted", "done"].map(x => `<option ${x === data[index].status ? "selected" : ""}>${x}</option>`).join("")}</select>`; cell.querySelector("select").onchange = async event => { const { error: updateError } = await sb.from("service_requests").update({ status: event.target.value }).eq("id", event.target.dataset.id); if (updateError) alert(updateError.message); else await window.jhieAudit?.("service_requests", "status_updated", event.target.dataset.id, { status: event.target.value }); }; });
     view.querySelector("#request-filter").onchange = event => { view.dataset.status = event.target.value; serviceRequestsAdmin(view); };
     view.querySelector("#requests-csv").onclick = () => { const csv = [Object.keys(data[0] || {}).join(","), ...data.map(row => Object.values(row).map(value => `"${String(value ?? "").replace(/"/g, '""')}"`).join(","))].join("\n"); const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); link.download = "service-requests.csv"; link.click(); URL.revokeObjectURL(link.href); };
   };
