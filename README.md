@@ -151,7 +151,20 @@ supabase functions deploy track
 supabase functions deploy donate
 ```
 
-Run `supabase/production-fixes.sql` once. Set these Supabase Function secrets: `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL`, `SITE_URL`, `IP_HASH_SALT`, `TURNSTILE_SECRET`, `FLW_SECRET_KEY`, and `FLW_WEBHOOK_HASH` (or `FLW_SECRET_HASH`). Set the public Turnstile site key as `TURNSTILE_SITE_KEY` in `config.js`. Never put the service-role key or provider secrets in frontend files.
+Run `supabase/production-fixes.sql` once. Set these Supabase Function secrets: `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL`, `SITE_URL`, `IP_HASH_SALT`, `TURNSTILE_SECRET`, `FLW_SECRET_KEY`, and `FLW_WEBHOOK_HASH` (or `FLW_SECRET_HASH`). Set the public Turnstile site key as `CFG.TURNSTILE_SITEKEY` in `config.js`. Never put the service-role key or provider secrets in frontend files.
+
+### Cloudflare Turnstile debugging
+
+Create or open the Turnstile widget in the Cloudflare dashboard. Put the **site key** in `config.js` as `CFG.TURNSTILE_SITEKEY`; put the **secret key** only in Supabase Edge Function secrets as `TURNSTILE_SECRET`. Add these widget hostnames: `jshealthinitiative.com`, `www.jshealthinitiative.com`, and `js-health-initiative-east-africa.vercel.app`.
+
+If the widget remains on “Verifying…”:
+
+1. Check the browser console for CSP errors and confirm `challenges.cloudflare.com` is allowed.
+2. Confirm the current hostname is listed in the Cloudflare widget.
+3. Temporarily disable privacy extensions or ad blockers.
+4. Check that the device clock is correct.
+5. Test the integration with Cloudflare’s test key `1x00000000000000000000AA`.
+6. Confirm `TURNSTILE_SECRET` is set in the deployed `submit` function and redeploy it after changing secrets.
 
 ## Test checklist
 
@@ -161,6 +174,7 @@ Run `supabase/production-fixes.sql` once. Set these Supabase Function secrets: `
 - Submit a service request and confirm the database row, visitor confirmation email and admin notification.
 - In the admin service-requests tab, filter by status, update a status and export CSV.
 - Complete Turnstile on contact, volunteer, partner, service-request and subscribe forms; reject requests with missing/invalid tokens.
+- For each protected form, verify the widget loads, a valid submission succeeds, a missing token returns a friendly 400, and a deliberately bad token returns a friendly 400.
 - Confirm public form limits (10/hour/type), subscription action limits (20/hour), email confirmation limit (3/address/day), and that admin broadcasts are not blocked by public limits.
 - Run two concurrent broadcast processors and confirm each recipient is claimed once; verify stale `sending` rows are reclaimed after 10 minutes.
 - Accept, reject and withdraw cookie consent; verify consent analytics records and deletion of visitor/session identifiers when rejected.

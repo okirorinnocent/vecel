@@ -54,7 +54,8 @@ document.querySelectorAll(".nav-links a").forEach(link => link.addEventListener(
 }));
 
 if ($("#foot")) {
-  $("#foot").innerHTML = `<footer><div class="container footer-inner"><div><p><strong>JS Health Initiative East Africa</strong></p><p class="muted">Building healthier communities and creating opportunities across Western Uganda.</p><p class="muted">Mbarara · Company limited by guarantee</p><p><a href="services.html">Services</a> · <a href="team.html">Team</a> · <a href="partners.html">Partners</a> · <a href="get-involved.html">Get involved</a> · <a href="get-involved.html#partner">Partner</a> · <a href="volunteer.html">Volunteer</a> · <a href="donate.html">Donate</a> · <a href="contact.html">Contact</a></p><p><a href="privacy.html">Privacy</a> · <a href="cookies.html">Cookies</a> · <button class="text-link footer-cookie-settings" type="button">Cookie settings</button></p></div><form class="stacked-form" data-type="subscribe" data-turnstile novalidate><div class="cf-turnstile" aria-label="Security check"></div><label>Get occasional updates<input name="email" type="email" placeholder="you@example.com" maxlength="254" autocomplete="email" required></label><button class="btn">Subscribe</button><p class="form-status" role="status" aria-live="polite"></p></form></div></footer>`;
+  const subscribeFooter = PAGE === "unsubscribe.html" ? "" : `<form class="stacked-form" data-type="subscribe" data-turnstile novalidate><div class="cf-turnstile" aria-label="Security check"></div><label>Get occasional updates<input name="email" type="email" placeholder="you@example.com" maxlength="254" autocomplete="email" required></label><button class="btn">Subscribe</button><p class="form-status" role="status" aria-live="polite"></p></form>`;
+  $("#foot").innerHTML = `<footer><div class="container footer-inner"><div><p><strong>JS Health Initiative East Africa</strong></p><p class="muted">Building healthier communities and creating opportunities across Western Uganda.</p><p class="muted">Mbarara · Company limited by guarantee</p><p><a href="services.html">Services</a> · <a href="team.html">Team</a> · <a href="partners.html">Partners</a> · <a href="get-involved.html">Get involved</a> · <a href="get-involved.html#partner">Partner</a> · <a href="volunteer.html">Volunteer</a> · <a href="donate.html">Donate</a> · <a href="contact.html">Contact</a></p><p><a href="privacy.html">Privacy</a> · <a href="cookies.html">Cookies</a> · <button class="text-link footer-cookie-settings" type="button">Cookie settings</button></p></div>${subscribeFooter}</div></footer>`;
   $(".footer-cookie-settings")?.addEventListener("click", () => window.jhieCookieSettings?.());
 }
 
@@ -82,6 +83,10 @@ document.querySelectorAll("form[data-type]").forEach(form => {
       status.className = `form-status ${className || ""}`;
     };
     if (button.disabled) return;
+    if (form.matches("[data-turnstile]") && form.dataset.turnstileReady !== "true") {
+      setStatus("Please complete the security check before submitting.", "err");
+      return;
+    }
     if (Date.now() - Number(form.dataset.renderedAt) < 1200) {
       setStatus("Please take a moment to review the form before sending.", "err");
       return;
@@ -102,6 +107,7 @@ document.querySelectorAll("form[data-type]").forEach(form => {
     if (data.website) {
       setStatus("Thank you!", "ok");
       form.reset();
+      window.jhieTurnstileReset?.(form);
       return;
     }
     if (Date.now() - lastSubmission < 3000) {
@@ -137,9 +143,11 @@ document.querySelectorAll("form[data-type]").forEach(form => {
       setStatus(result.message || "Thank you!", "ok");
       if (window.jhieTrack) window.jhieTrack(data.type === "volunteer" ? "volunteer_submit" : data.type === "subscribe" ? "subscribe" : "form_submit");
       form.reset();
+      window.jhieTurnstileReset?.(form);
     } catch (error) {
       setStatus(error.message, "err");
     }
+    window.jhieTurnstileReset?.(form);
     button.disabled = false;
   });
 });

@@ -52,7 +52,11 @@ async function confirmationMail(to: string, subject: string, html: string, kind:
 }
 async function verifyTurnstile(request: Request, token: string) {
   const secret = Deno.env.get("TURNSTILE_SECRET");
-  if (!secret || !token) return false;
+  if (!secret) {
+    console.warn("TURNSTILE_SECRET is not configured; skipping Turnstile verification.");
+    return true;
+  }
+  if (!token) return false;
   const form = new FormData();
   form.append("secret", secret);
   form.append("response", token);
@@ -82,9 +86,9 @@ Deno.serve(async request => {
     const adminTypes = type === "broadcast" || type === "process_broadcast";
     const user = adminTypes ? await isAdmin(request) : null;
     if (adminTypes && !user) return json({ error: "Not authorised." }, 401);
-    if (!adminTypes && !(await limit(`${await hashIp(request)}:${type}`, type === "subscribe" || type === "confirm" || type === "unsubscribe" ? 20 : 10, 3600))) return json({ error: "Too many requests. Please try again later." }, 429);
     const needsTurnstile = type === "contact" || type === "volunteer" || type === "service_request" || type === "subscribe";
-    if (needsTurnstile && !await verifyTurnstile(request, s(body["cf-turnstile-response"], 4096))) return json({ error: "Please complete the security check and try again." }, 400);
+    if (needsTurnstile && !await verifyTurnstile(request, s(body.turnstile_token, 4096))) return json({ error: "Please complete the security check and try again." }, 400);
+    if (!adminTypes && !(await limit(`${await hashIp(request)}:${type}`, type === "subscribe" || type === "confirm" || type === "unsubscribe" ? 20 : 10, 3600))) return json({ error: "Too many requests. Please try again later." }, 429);
     if (type === "contact") {
       const name = s(body.name, 100), email = s(body.email, 254), message = s(body.message, 3000);
       if (!name || !message || !okEmail(email)) return json({ error: "Please fill in all fields with a valid email." }, 400);
