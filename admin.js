@@ -274,13 +274,33 @@ const tableAdmin = async (view, tableName) => {
   draw();
 };
 const showCompose = async v => {
-  v.innerHTML = `<h2>Post an update</h2><form id="up" class="stacked-form"><label>Title<input name="title" required maxlength="150"></label><label>Text<textarea name="body" rows="4" required maxlength="3000"></textarea></label><button class="btn">Publish update</button><p class="form-status" role="status"></p></form><h2>Email all subscribers</h2><form id="bc" class="stacked-form"><label>Subject<input name="subject" required maxlength="150"></label><label>Message<textarea name="message" rows="5" required maxlength="5000"></textarea></label><button class="btn">Queue broadcast</button><p class="form-status" role="status"></p></form>`;
+  v.innerHTML = `<h2>Post an update</h2><form id="up" class="stacked-form"><label>Title<input name="title" required maxlength="150"></label><label>Text<textarea name="body" rows="4" required maxlength="3000"></textarea></label><label>Image (JPG, PNG or WebP; max 3 MB)<input name="image" type="file" accept="image/jpeg,image/png,image/webp"></label><button class="btn">Publish update</button><p class="form-status" role="status"></p></form><h2>Email all subscribers</h2><form id="bc" class="stacked-form"><label>Subject<input name="subject" required maxlength="150"></label><label>Message<textarea name="message" rows="5" required maxlength="5000"></textarea></label><button class="btn">Queue broadcast</button><p class="form-status" role="status"></p></form>`;
   v.querySelector("#up").onsubmit = async event => {
     event.preventDefault();
-    const form = event.target, values = Object.fromEntries(new FormData(form));
-    const { error } = await sb.from("updates").insert({ title: String(values.title).trim(), body: String(values.body).trim(), published: true });
-    form.querySelector(".form-status").textContent = error ? error.message : "Published.";
-    if (!error) { await auditAdmin("updates", "created", null, { title: values.title }); form.reset(); }
+    const form = event.target, values = Object.fromEntries(new FormData(form)), file = form.querySelector("[name=image]").files[0], status = form.querySelector(".form-status"), button = form.querySelector("button");
+    let path = null;
+    button.disabled = true;
+    try {
+      if (file) {
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("Use a JPG, PNG or WebP image.");
+        if (file.size > MAXIMG) throw new Error("Image is too large (maximum 3 MB).");
+        const ext = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" }[file.type];
+        path = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
+        const upload = await sb.storage.from("updates").upload(path, file, { contentType: file.type, upsert: false });
+        if (upload.error) throw upload.error;
+      }
+      const image_url = path ? sb.storage.from("updates").getPublicUrl(path).data.publicUrl : null;
+      const { data: created, error } = await sb.from("updates").insert({ title: String(values.title).trim(), body: String(values.body).trim(), image_url, published: true }).select("id").single();
+      if (error) throw error;
+      await auditAdmin("updates", "created", created.id, { title: values.title, image_url });
+      status.textContent = "Published.";
+      form.reset();
+    } catch (error) {
+      if (path) await sb.storage.from("updates").remove([path]);
+      status.textContent = error.message || "Could not publish update.";
+    } finally {
+      button.disabled = false;
+    }
   };
   v.querySelector("#bc").onsubmit = async event => {
     event.preventDefault();
