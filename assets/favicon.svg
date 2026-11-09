@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="JS Health Initiative">
+  <circle cx="64" cy="64" r="58" fill="#f8f7f2" stroke="#123f39" stroke-width="6"/>
+  <path fill="#df6d52" d="M48 20h32v28h28v32H80v28H48V80H20V48h28z"/>
+  <path fill="#123f39" fill-rule="evenodd" d="M64 40a24 24 0 0 1 7 1l5-6 7 4-2 8a24 24 0 0 1 5 5l7-2 4 7-6 6a24 24 0 0 1 1 7l7 3-2 8-8-1a24 24 0 0 1-4 6l4 7-7 4-6-5a24 24 0 0 1-7 2l-2 8h-8l-2-8a24 24 0 0 1-7-2l-6 5-7-4 4-7a24 24 0 0 1-4-6l-8 1-2-8 7-3a24 24 0 0 1 1-7l-6-6 4-7 7 2a24 24 0 0 1 5-5l-2-8 7-4 5 6a24 24 0 0 1 7-1l2-8h8zm0 13a11 11 0 1 0 0 22 11 11 0 0 0 0-22z"/>
+</svg>

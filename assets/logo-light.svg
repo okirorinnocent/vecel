@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 128" role="img" aria-labelledby="title desc">
+  <title id="title">JS Health Initiative East Africa</title>
+  <desc id="desc">Light JS Health Initiative East Africa logo for dark backgrounds.</desc>
+  <circle cx="64" cy="64" r="57" fill="none" stroke="#f8f7f2" stroke-width="6"/>
+  <path fill="#f8f7f2" d="M48 20h32v28h28v32H80v28H48V80H20V48h28z"/>
+  <path fill="#f8f7f2" fill-rule="evenodd" d="M64 39a25 25 0 0 1 7 1l5-6 8 5-2 7a25 25 0 0 1 5 5l7-2 5 8-6 5a25 25 0 0 1 1 7l7 3-2 9-8-1a25 25 0 0 1-4 6l4 7-8 5-6-5a25 25 0 0 1-7 2l-2 8h-9l-2-8a25 25 0 0 1-7-2l-6 5-8-5 4-7a25 25 0 0 1-4-6l-8 1-2-9 7-3a25 25 0 0 1 1-7l-6-5 5-8 7 2a25 25 0 0 1 5-5l-2-7 8-5 5 6a25 25 0 0 1 7-1l2-8h9zm0 13a12 12 0 1 0 0 24 12 12 0 0 0-0-24z"/>
+  <text x="142" y="61" fill="#f8f7f2" font-family="Georgia, serif" font-size="31" font-weight="700">JS Health Initiative</text>
+  <text x="144" y="91" fill="#f8f7f2" font-family="Georgia, serif" font-size="21">East Africa</text>
+</svg>
