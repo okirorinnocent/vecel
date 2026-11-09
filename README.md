@@ -8,6 +8,8 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 
 **Public site**
 - Home page with mission, admin-managed program cards linking to their own pages, and a live "Latest updates" feed
+- Team, cooperating partners and biomedical engineering services pages, with published Supabase content and safe static fallbacks
+- Service-request form for facilities, including email confirmation and admin notification
 - Volunteer application form
 - Contact form
 - Donation page (USD, EUR, GBP, UGX) with quick-amount buttons and a payment success/failure banner
@@ -21,6 +23,8 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 - Change the status of applications and messages (`new`, `reviewed`, `contacted`, `done`)
 - Donation totals per currency (successful payments only)
 - Add, edit, reorder, hide and delete program cards and their pages, including biomedical engineering volunteer services
+- Manage team members, partner organisations, published services and service-request status
+- Upload or remove team photos and partner logos through the public `team-photos` and `partner-logos` buckets
 - Post public updates with an optional image
 - Email all active subscribers
 
@@ -28,6 +32,9 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 
 ```
 ├── index.html        # Home page
+├── team.html         # Published team profiles
+├── partners.html     # Published cooperating partners
+├── services.html     # Biomedical engineering services and request form
 ├── volunteer.html    # Volunteer application form
 ├── contact.html      # Contact details and message form
 ├── get-involved.html # Journeys for donors, volunteers, partners, communities + partner form
@@ -36,6 +43,10 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 ├── admin.html        # Admin dashboard (noindex)
 ├── admin.js          # Admin logic (auth, tables, compose, broadcast)
 ├── admin-programs.js # Admin "programs" tab: add/edit/reorder/hide/delete program cards
+├── admin-content.js  # Admin team, partners, services and service-request tabs
+├── team.js           # Team loader and initials fallback
+├── partners.js       # Partner loader and type filter
+├── services.js       # Service loader and request-form options
 ├── program.html      # Program detail page (loads ?slug=... from the database)
 ├── programs.js       # Renders home-page program cards and the detail page
 ├── home.css          # Home page design (hero, focus-area cross, about, closing banner)
@@ -61,9 +72,9 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 
 ## How it works
 
-- `app.js` injects the shared navigation and footer into every page and wires up any `<form data-type="...">`. Supported types are `contact`, `volunteer`, `subscribe` and `donate`.
+- `app.js` injects the shared navigation and footer into every page and wires up any `<form data-type="...">`. Supported types include `contact`, `volunteer`, `subscribe`, `service_request` and `donate`.
 - Forms post to Supabase Edge Functions at `<SUPABASE_URL>/functions/v1/`:
-  - `submit`: handles contact, volunteer, subscribe, unsubscribe and (admin-only) broadcast requests
+  - `submit`: handles contact, volunteer, subscribe, service requests, unsubscribe and (admin-only) broadcast requests
   - `donate`: creates a Flutterwave payment and returns a checkout link
 - The home page reads published rows from the `updates` table through the Supabase REST API.
 - The admin page signs in with Supabase Auth, then checks that the user exists in the `admins` table before showing the panel.
@@ -83,8 +94,12 @@ You'll need a Supabase project with the following.
 | `updates` | `created_at`, `title`, `body`, `image_url`, `published` |
 | `admins` | `user_id` |
 | `programs` | `id`, `slug`, `title`, `summary`, `body`, `icon`, `link_url`, `sort_order`, `published` (run `supabase/programs.sql`) |
+| `team_members` | `id`, `name`, `role_title`, `department`, `bio`, `photo_url`, `email`, `phone`, `linkedin_url`, `show_email`, `show_phone`, `sort_order`, `published` |
+| `partners` | `id`, `name`, `partner_type`, `description`, `logo_url`, `website_url`, `partner_since`, `sort_order`, `published` |
+| `services` | `id`, `slug`, `title`, `summary`, `body`, `sort_order`, `published` |
+| `service_requests` | `id`, `created_at`, `facility_name`, `district`, `contact_name`, `email`, `phone`, `service_type`, `equipment`, `message`, `status` |
 
-**Storage:** a public bucket named `updates` for update images.
+**Storage:** public buckets named `updates`, `team-photos` and `partner-logos`; admin write policies should protect all three.
 
 **Edge Functions:** `submit` and `donate` (store secrets such as the Flutterwave secret key and your email provider key as Supabase function secrets, never in this repo).
 
@@ -127,6 +142,22 @@ Because it is a static site, it can be hosted anywhere that serves files, for ex
 - **Netlify** or **Cloudflare Pages**: connect the repository (no build command, publish directory is the root)
 
 After deploying, add your site URL to the allowed URLs in Supabase Auth settings, and confirm that the Flutterwave redirect URL points back to `donate.html`.
+
+Deploy the service-request changes with:
+
+```bash
+supabase functions deploy submit
+```
+
+Set these Supabase Function secrets: `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL`, `SITE_URL`, and `IP_HASH_SALT`. Never put the service-role key or email-provider secrets in frontend files.
+
+## Test checklist
+
+- Open `team.html`, `partners.html` and `services.html` with published rows and with empty tables; confirm fallbacks and empty states.
+- Publish and unpublish a team member or service, then confirm public visibility changes.
+- Upload valid and oversized team photos and partner logos; confirm invalid types are rejected and removal clears the URL.
+- Submit a service request and confirm the database row, visitor confirmation email and admin notification.
+- In the admin service-requests tab, filter by status, update a status and export CSV.
 
 ## Customisation
 

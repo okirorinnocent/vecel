@@ -31,7 +31,7 @@ async function api(path, body, token) {
 const pageLink = (href, label) => `<a href="${href}"${PAGE === href ? ' aria-current="page"' : ""}>${label}</a>`;
 
 if ($("#nav")) {
-  $("#nav").innerHTML = `<a class="skip" href="#main">Skip to content</a><header class="nav"><div class="container nav-inner"><a href="index.html" class="logo"><span class="logo-mark">JHIE</span><span class="logo-text">JS Health Initiative</span></a><button class="burger" aria-label="Open navigation menu" aria-expanded="false" aria-controls="links">☰</button><nav class="nav-links" id="links" aria-label="Main navigation">${pageLink("index.html", "Home")}<a href="index.html#work">What we do</a><a href="index.html#where">Where we work</a>${pageLink("get-involved.html", "Get involved")}${pageLink("contact.html", "Contact")}<a href="donate.html" class="btn">Donate</a></nav></div></header>`;
+  $("#nav").innerHTML = `<a class="skip" href="#main">Skip to content</a><header class="nav"><div class="container nav-inner"><a href="index.html" class="logo"><span class="logo-mark">JHIE</span><span class="logo-text">JS Health Initiative</span></a><button class="burger" aria-label="Open navigation menu" aria-expanded="false" aria-controls="links">☰</button><nav class="nav-links" id="links" aria-label="Main navigation">${pageLink("index.html", "Home")}<a href="index.html#work">What we do</a><a href="services.html">Services</a><a href="team.html">Team</a><a href="partners.html">Partners</a><a href="index.html#where">Where we work</a>${pageLink("get-involved.html", "Get involved")}${pageLink("contact.html", "Contact")}<a href="donate.html" class="btn">Donate</a></nav></div></header>`;
 }
 
 const burger = $(".burger");
@@ -54,7 +54,7 @@ document.querySelectorAll(".nav-links a").forEach(link => link.addEventListener(
 }));
 
 if ($("#foot")) {
-  $("#foot").innerHTML = `<footer><div class="container footer-inner"><div><p><strong>JS Health Initiative East Africa</strong></p><p class="muted">Building healthier communities and creating opportunities across Western Uganda.</p><p class="muted">Mbarara · Company limited by guarantee</p><p><a href="get-involved.html">Get involved</a> · <a href="get-involved.html#partner">Partner</a> · <a href="volunteer.html">Volunteer</a> · <a href="donate.html">Donate</a> · <a href="contact.html">Contact</a></p><p><a href="privacy.html">Privacy</a> · <a href="cookies.html">Cookies</a> · <button class="text-link footer-cookie-settings" type="button">Cookie settings</button></p></div><form class="stacked-form" data-type="subscribe" novalidate><label>Get occasional updates<input name="email" type="email" placeholder="you@example.com" maxlength="254" autocomplete="email" required></label><button class="btn">Subscribe</button><p class="form-status" role="status" aria-live="polite"></p></form></div></footer>`;
+  $("#foot").innerHTML = `<footer><div class="container footer-inner"><div><p><strong>JS Health Initiative East Africa</strong></p><p class="muted">Building healthier communities and creating opportunities across Western Uganda.</p><p class="muted">Mbarara · Company limited by guarantee</p><p><a href="services.html">Services</a> · <a href="team.html">Team</a> · <a href="partners.html">Partners</a> · <a href="get-involved.html">Get involved</a> · <a href="get-involved.html#partner">Partner</a> · <a href="volunteer.html">Volunteer</a> · <a href="donate.html">Donate</a> · <a href="contact.html">Contact</a></p><p><a href="privacy.html">Privacy</a> · <a href="cookies.html">Cookies</a> · <button class="text-link footer-cookie-settings" type="button">Cookie settings</button></p></div><form class="stacked-form" data-type="subscribe" novalidate><label>Get occasional updates<input name="email" type="email" placeholder="you@example.com" maxlength="254" autocomplete="email" required></label><button class="btn">Subscribe</button><p class="form-status" role="status" aria-live="polite"></p></form></div></footer>`;
   $(".footer-cookie-settings")?.addEventListener("click", () => window.jhieCookieSettings?.());
 }
 
@@ -159,8 +159,9 @@ if ($("#updates")) {
         const date = new Date(value);
         return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
       };
-      $("#updates").innerHTML = Array.isArray(updates) && updates.length
-        ? updates.map(update => `<article class="feature">${/^https:\/\//.test(update.image_url || "") ? `<img src="${esc(update.image_url)}" alt="" loading="lazy">` : ""}<span class="feature-date">${esc(formatDate(update.created_at))}</span><h3>${esc(update.title)}</h3><p>${esc(update.body)}</p></article>`).join("")
+      const fieldUpdates = PAGE === "services.html" ? updates.filter(update => /service|equipment|biomedical|maintenance|training/i.test(`${update.title} ${update.body}`)) : updates;
+      $("#updates").innerHTML = Array.isArray(fieldUpdates) && fieldUpdates.length
+        ? fieldUpdates.map(update => `<article class="feature">${/^https:\/\//.test(update.image_url || "") ? `<img src="${esc(update.image_url)}" alt="" loading="lazy">` : ""}<span class="feature-date">${esc(formatDate(update.created_at))}</span><h3>${esc(update.title)}</h3><p>${esc(update.body)}</p></article>`).join("")
         : '<p class="updates-empty">Field notes from our sessions and programs will appear here. To hear first, subscribe at the bottom of this page.</p>';
     })
     .catch(error => {

@@ -8,7 +8,10 @@ async function boot(){
   const{data,error}=await sb.from("admins").select("user_id").eq("user_id",session.user.id).maybeSingle();
   if(error||!data){await sb.auth.signOut();$("#login").hidden=false;$("#panel").hidden=true;$("#ls").textContent="This account is not an admin.";return}
   $("#login").hidden=true;$("#panel").hidden=false;
-  $("#tabs").innerHTML=[...Object.keys(T),"programs","compose","analytics"].map(k=>`<button class="btn btn-ghost" data-t="${k}">${k}</button>`).join("");
+  $("#tabs").innerHTML=[...Object.keys(T),"programs","team","partners","services","service requests","compose","analytics"].map(k=>`<button class="btn btn-ghost" data-t="${k}">${k}</button>`).join("");
+  const { count: newRequests } = await sb.from("service_requests").select("id", { count: "exact", head: true }).eq("status", "new");
+  const requestTab = [...$("#tabs").querySelectorAll("button")].find(button => button.dataset.t === "service requests");
+  if (requestTab && newRequests) requestTab.innerHTML = `service requests <span class="badge">${esc(newRequests)}</span>`;
   show(cur);
 }
 function mark(t){document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.t===t))}
@@ -22,6 +25,10 @@ sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT"||ev==="TOKEN_REFRESH_FAILED"
 async function show(t){
   mark(t);const v=$("#view");
   if(t==="programs")return programsAdmin(v);
+  if(t==="team")return teamAdmin(v);
+  if(t==="partners")return partnersAdmin(v);
+  if(t==="services")return servicesAdmin(v);
+  if(t==="service requests")return serviceRequestsAdmin(v);
   if(t==="analytics")return analyticsAdmin(v);
   if(t==="compose"){
     v.innerHTML=`<h2>Post an update</h2><form id="up" class="stacked-form"><label>Title<input name="title" required maxlength="150"></label><label>Text<textarea name="body" rows="4" required maxlength="3000"></textarea></label><label>Image (optional, max 3 MB)<input name="image" type="file" accept="image/jpeg,image/png,image/webp"></label><button class="btn">Publish update</button></form>
