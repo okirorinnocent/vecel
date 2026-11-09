@@ -1,5 +1,5 @@
 const sb=supabase.createClient(CFG.SUPA,CFG.KEY);
-const T={applications:["created_at","name","email","phone","skills","status"],messages:["created_at","name","email","message","status"],subscribers:["created_at","email","active"],donations:["created_at","name","email","amount","currency","status"],updates:["created_at","title","published"],email_log:["created_at","to_email","subject","kind","ok","error"],broadcasts:["created_at","subject","status","sent_count","failed_count","total_count"],audit_log:["created_at","user_id","action","table_name","record_id","changes"]};
+const T={applications:["created_at","name","email","phone","skills","status"],messages:["created_at","name","email","message","status"],subscribers:["created_at","email","active"],donations:["created_at","name","email","amount","currency","status"],updates:["created_at","title","published"],cookie_consents:["created_at","visitor_id","analytics","version"],email_log:["created_at","to_email","subject","kind","ok","error"],broadcasts:["created_at","subject","status","sent_count","failed_count","total_count"],audit_log:["created_at","user_id","action","table_name","record_id","changes"]};
 const ST=["new","reviewed","contacted","done"];let cur="applications";
 const MAXIMG=3*1024*1024;
 async function boot(){
