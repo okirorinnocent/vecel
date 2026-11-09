@@ -1,11 +1,15 @@
 -- Run AFTER programs.sql. Replaces the "Describe this program here." placeholders with real page text
 -- that matches the homepage. Edit freely, or change it later from Admin > programs.
-update public.programs set body =
-'Who it is for: students, job seekers, small business owners and community health workers.
+update public.programs set slug='biomedical-engineering-volunteer-services',
+title='Biomedical engineering volunteer services',
+summary='Free training, equipment maintenance guidance and practical support for healthcare teams.',
+icon='⚙️',
+body =
+'Who it is for: health facilities, clinicians, health workers and equipment users.
 
-What we do: we teach hands-on skills, from using a computer safely to finding information, running a small business online and keeping records, in short courses that fit around work and school.
+What we do: we provide free user training, basic equipment checks, preventive maintenance guidance and practical troubleshooting support for healthcare equipment, working with facility teams and qualified volunteers. We document equipment needs and publish field notes, lessons and service updates when it is safe and appropriate to do so.
 
-The change we work toward: participants who can apply for opportunities, earn or save money with digital tools, and use technology to improve health in their own community.' where slug='digital-skilling';
+The change we work toward: health workers who can use equipment safely and facilities that keep essential devices working, maintained and available for patient care.' where slug in ('digital-skilling','biomedical-engineering-volunteer-services');
 update public.programs set body =
 'Who it is for: our own programs, health partners and policymakers.
 

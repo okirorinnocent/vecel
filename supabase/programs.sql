@@ -29,7 +29,7 @@ create policy "admins delete" on public.programs for delete to authenticated
 
 -- Seed with your current five cards
 insert into public.programs(slug,title,summary,icon,body,sort_order) values
-('digital-skilling','Digital skilling','Practical digital skills for the modern economy.','💻','Describe this program here.',10),
+('biomedical-engineering-volunteer-services','Biomedical engineering volunteer services','Free training, equipment maintenance guidance and practical support for healthcare teams.','⚙️','Describe this program here.',10),
 ('research-innovation','Research & innovation','Local research that responds to real challenges in our communities.','🔬','Describe this program here.',20),
 ('public-health-education','Public health education','Critical health awareness delivered at community level.','🩺','Describe this program here.',30),
 ('surgical-care-support','Surgical care support','Sourcing and subsidising essential equipment and implants so surgery is within reach.','🏥','Describe this program here.',40),

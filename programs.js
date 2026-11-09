@@ -21,7 +21,7 @@ const det=$("#program");
 if(det){
   // Built-in copy, used only if the database cannot be reached (never for hidden or deleted programs)
   const BASE={
-    "digital-skilling":{title:"Digital skilling",icon:"💻",summary:"Practical digital skills for the modern economy."},
+    "biomedical-engineering-volunteer-services":{title:"Biomedical engineering volunteer services",icon:"⚙️",summary:"Free training, equipment maintenance guidance and practical support for healthcare teams."},
     "research-innovation":{title:"Research & innovation",icon:"🔬",summary:"Local research that responds to real challenges in our communities."},
     "public-health-education":{title:"Public health education",icon:"🩺",summary:"Critical health awareness delivered at community level."},
     "surgical-care-support":{title:"Surgical care support",icon:"🏥",summary:"Sourcing and subsidising essential equipment and implants so surgery is within reach."},

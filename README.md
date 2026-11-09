@@ -1,6 +1,6 @@
 # JS Health Initiative East Africa — Website
 
-Official website for **JS Health Initiative East Africa**, a Ugandan non-profit (company limited by guarantee, based in Mbarara) working on digital skilling, public health education, research and innovation, surgical care support, and youth empowerment.
+Official website for **JS Health Initiative East Africa**, a Ugandan non-profit (company limited by guarantee, based in Mbarara) working on biomedical engineering volunteer services, public health education, research and innovation, surgical care support, and youth empowerment.
 
 The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript, no build step) backed by **[Supabase](https://supabase.com)** for the database, authentication, file storage and serverless edge functions. Donations are processed through **Flutterwave**.
 
@@ -20,7 +20,7 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 - View volunteer applications, contact messages, subscribers, donations and updates
 - Change the status of applications and messages (`new`, `reviewed`, `contacted`, `done`)
 - Donation totals per currency (successful payments only)
-- Add, edit, reorder, hide and delete program cards and their pages
+- Add, edit, reorder, hide and delete program cards and their pages, including biomedical engineering volunteer services
 - Post public updates with an optional image
 - Email all active subscribers
 
@@ -130,7 +130,7 @@ After deploying, add your site URL to the allowed URLs in Supabase Auth settings
 
 ## Customisation
 
-- **Brand colour:** change `--accent` and `--accent-dark` in `:root` at the top of `style.css`
+- **Brand colour:** change the shared color tokens in `:root` at the top of `style.css`
 - **Navigation and footer:** edit the templates at the top of `app.js`
 - **Donation amounts:** edit the `data-a` buttons in `donate.html`
 - **Page content and SEO:** edit the text and `<meta name="description">` in each HTML file
