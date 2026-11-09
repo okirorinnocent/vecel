@@ -38,8 +38,9 @@ create table if not exists public.broadcast_recipients (
   broadcast_id uuid not null references public.broadcasts(id) on delete cascade,
   email text not null,
   token uuid,
-  status text not null default 'pending' check (status in ('pending','sent','failed')),
+  status text not null default 'pending' check (status in ('pending','sending','sent','failed')),
   error text,
+  sending_at timestamptz,
   sent_at timestamptz,
   unique (broadcast_id, email)
 );

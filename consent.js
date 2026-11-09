@@ -50,9 +50,9 @@
   const removeAnalytics = () => { write("jhie_vid", "", 0); sessionStorage.removeItem("jhie_sid"); };
   const sendConsent = analytics => {
     if (isAdmin || !window.CFG) return;
-    const visitor = analytics ? read("jhie_vid") || crypto.randomUUID() : null;
+    const visitor = analytics && !dnt ? read("jhie_vid") || crypto.randomUUID() : null;
     if (analytics && !read("jhie_vid")) write("jhie_vid", visitor, 31536000);
-    request({ event: "consent", visitor_id: visitor, analytics, consent_version: VERSION });
+    request({ event: "consent", visitor_id: visitor, analytics: analytics && !dnt, consent_version: VERSION });
   };
   const setChoice = analytics => {
     if (!analytics) removeAnalytics();
@@ -76,7 +76,7 @@
       if (choice === "save") setChoice(true);
     };
   };
-  window.jhieCookieSettings = () => { removeAnalytics(); write("jhie_consent", "", 0); sendConsent(false); show(); };
+  window.jhieCookieSettings = () => { removeAnalytics(); write("jhie_consent", "", 0); show(); };
   document.addEventListener("DOMContentLoaded", () => {
     if (debug) console.info("[analytics] state", { consent: parse(), dnt, gpc: navigator.globalPrivacyControl === true, admin: isAdmin });
     show();

@@ -79,8 +79,10 @@ async function analyticsAdmin(v){
 }
 const auditAdmin = async (tableName, action, recordId, changes) => {
   const { data: session } = await sb.auth.getSession();
-  const { error } = await sb.from("admin_audit_log").insert({ user_id: session.session?.user.id, action, table_name: tableName, record_id: recordId || null, changes });
-  if (error) console.warn("Audit log write failed:", error.message);
+  try {
+    const { error } = await sb.from("admin_audit_log").insert({ user_id: session.session?.user.id, action, table_name: tableName, record_id: recordId == null ? null : String(recordId), changes });
+    if (error) console.warn("Audit log write failed:", error.message);
+  } catch (e) { console.warn("Audit log write failed:", e); }
 };
 window.jhieAudit = auditAdmin;
 const csvDownload = (name, rows) => {
@@ -185,8 +187,10 @@ const deleteRecordsNow = async ({ table, records, view, removeRecord }) => {
   notice.textContent = `Deleted ${records.length} ${records.length === 1 ? "update" : "updates"}.`;
   view.querySelector(".table-notice")?.replaceChildren(notice);
 };
+const sameId = (a, b) => String(a) === String(b);
 const tableAdmin = async (view, tableName) => {
-  const columns = T[tableName], query = sb.from(tableName).select("*").order("created_at", { ascending: false }).limit(1000);
+  const actualTable = tableName === "audit_log" ? "admin_audit_log" : tableName;
+  const columns = T[tableName], query = sb.from(actualTable).select("*").order("created_at", { ascending: false }).limit(1000);
   const { data, error } = await query;
   if (error) { view.textContent = `Could not load ${tableName}: ${error.message}`; return; }
   const pageSize = 25, isUpdates = tableName === "updates";
@@ -223,12 +227,12 @@ const tableAdmin = async (view, tableName) => {
   };
   const draw = (page = currentPage) => {
     const search = String(view.querySelector("#table-search")?.value || "").toLowerCase();
-    const rows = data.filter(row => tableName !== "email_log" || row.ok === false).filter(row => !search || columns.some(column => String(row[column] ?? "").toLowerCase().includes(search)));
+    const rows = data.filter(row => tableName !== "email_log" || row.ok === false).filter(row => !search || columns.some(column => String(column === "changes" ? JSON.stringify(row[column]) : row[column] ?? "").toLowerCase().includes(search)));
     const pages = Math.max(1, Math.ceil(rows.length / pageSize)), current = Math.min(page, pages), shown = rows.slice((current - 1) * pageSize, current * pageSize);
     currentPage = current;
     const status = tableName === "applications" || tableName === "messages";
     const headers = isUpdates ? `<th><input type="checkbox" id="select-page" aria-label="Select all updates on this page"></th>` : "";
-    const body = shown.map(row => `<tr>${isUpdates ? `<td><input type="checkbox" class="row-select" data-id="${esc(row.id)}" aria-label="Select ${esc(row.title)}"></td>` : ""}${columns.map(column => column === "status" && status ? `<td><select data-id="${esc(row.id)}" data-prev="${esc(row.status)}">${ST.map(item => `<option ${item === row.status ? "selected" : ""}>${item}</option>`).join("")}</select></td>` : column === "published" && isUpdates ? `<td><button type="button" class="btn btn-ghost publish-toggle" data-id="${esc(row.id)}">${row.published ? "Unpublish" : "Publish"}</button></td>` : `<td>${esc(column === "created_at" ? new Date(row[column]).toLocaleString() : row[column])}</td>`).join("")}${isUpdates ? `<td><button type="button" class="btn btn-danger delete-one" data-id="${esc(row.id)}">Delete</button></td>` : ""}</tr>`).join("");
+    const body = shown.map(row => `<tr>${isUpdates ? `<td><input type="checkbox" class="row-select" data-id="${esc(row.id)}" aria-label="Select ${esc(row.title)}"></td>` : ""}${columns.map(column => column === "status" && status ? `<td><select data-id="${esc(row.id)}" data-prev="${esc(row.status)}">${ST.map(item => `<option ${item === row.status ? "selected" : ""}>${item}</option>`).join("")}</select></td>` : column === "published" && isUpdates ? `<td><button type="button" class="btn btn-ghost publish-toggle" data-id="${esc(row.id)}">${row.published ? "Unpublish" : "Publish"}</button></td>` : `<td>${esc(column === "created_at" ? new Date(row[column]).toLocaleString() : column === "changes" ? JSON.stringify(row[column]) : row[column])}</td>`).join("")}${isUpdates ? `<td><button type="button" class="btn btn-danger delete-one" data-id="${esc(row.id)}">Delete</button></td>` : ""}</tr>`).join("");
     output.innerHTML = `${isUpdates ? `<div class="table-toolbar"><button type="button" class="btn btn-danger" id="delete-selected" disabled>Delete selected</button><span class="muted">Select all on this page using the checkbox above.</span></div>` : ""}<div class="scroll"><table><thead><tr>${headers}${columns.map(column => `<th>${esc(column.replace("_", " "))}</th>`).join("")}${isUpdates ? "<th>Actions</th>" : ""}</tr></thead><tbody>${body}</tbody></table></div><p class="muted">Page ${current} of ${pages} · ${rows.length} matching records</p><button class="btn btn-ghost" id="prev-page" ${current === 1 ? "disabled" : ""}>Previous</button> <button class="btn btn-ghost" id="next-page" ${current === pages ? "disabled" : ""}>Next</button>`;
     output.querySelector("#prev-page").addEventListener("click", () => draw(current - 1));
     output.querySelector("#next-page").addEventListener("click", () => draw(current + 1));
@@ -250,7 +254,9 @@ const tableAdmin = async (view, tableName) => {
     });
     output.querySelectorAll(".row-select").forEach(box => box.addEventListener("change", updateDeleteButton));
   };
-  view.innerHTML = `<h2 id="table-heading">${esc(tableName === "email_log" ? "Failed email log" : tableName.replace("_", " "))} (${data.length})</h2><p class="table-notice" role="status"></p><p><input id="table-search" type="search" placeholder="Search records" aria-label="Search records"> <button class="btn btn-ghost" id="table-export">Export CSV</button></p>`;
+  const visibleCount = tableName === "email_log" ? data.filter(row => row.ok === false).length : data.length;
+  const donationSummary = tableName === "donations" ? (() => { const totals = {}; data.filter(row => row.status === "succeeded").forEach(row => { totals[row.currency] = (totals[row.currency] || 0) + Number(row.amount); }); return `<p><b>Received:</b> ${esc(Object.entries(totals).map(([currency, amount]) => `${amount.toLocaleString()} ${currency}`).join(" · ") || "nothing yet")}</p>`; })() : "";
+  view.innerHTML = `<h2 id="table-heading">${esc(tableName === "email_log" ? "Failed email log" : tableName === "audit_log" ? "Audit log" : tableName.replace("_", " "))} (${visibleCount})</h2>${donationSummary}<p class="table-notice" role="status"></p><p><input id="table-search" type="search" placeholder="Search records" aria-label="Search records"> <button class="btn btn-ghost" id="table-export">Export CSV</button></p>`;
   view.appendChild(output);
   view.querySelector("#table-search").addEventListener("input", () => draw(1));
   view.querySelector("#table-export").addEventListener("click", () => csvDownload(`${tableName}.csv`, [columns, ...data.filter(row => tableName !== "email_log" || row.ok === false).map(row => columns.map(column => row[column]))]));
@@ -259,16 +265,16 @@ const tableAdmin = async (view, tableName) => {
     if (!button) return;
     if (button.id === "prev-page" || button.id === "next-page") return;
     if (button.classList.contains("publish-toggle")) {
-      const row = data.find(item => item.id === button.dataset.id);
+      const row = data.find(item => sameId(item.id, button.dataset.id));
       if (row) updateRow(row, button);
     }
     if (button.classList.contains("delete-one")) {
-      const row = data.find(item => item.id === button.dataset.id);
-      if (row) deleteRecords({ table: tableName, records: [row], view, removeRecord: record => { const index = data.findIndex(item => item.id === record.id); if (index >= 0) data.splice(index, 1); view.querySelector("#table-heading").textContent = `updates (${data.length})`; draw(currentPage); } });
+      const row = data.find(item => sameId(item.id, button.dataset.id));
+      if (row) deleteRecords({ table: tableName, records: [row], view, removeRecord: record => { const index = data.findIndex(item => sameId(item.id, record.id)); if (index >= 0) data.splice(index, 1); view.querySelector("#table-heading").textContent = `updates (${data.length})`; draw(currentPage); } }).catch(error => setNotice(error.message || "Delete failed."));
     }
     if (button.id === "delete-selected") {
-      const records = [...output.querySelectorAll(".row-select:checked")].map(box => data.find(item => item.id === box.dataset.id)).filter(Boolean);
-      if (records.length) deleteRecords({ table: tableName, records, view, removeRecord: record => { const index = data.findIndex(item => item.id === record.id); if (index >= 0) data.splice(index, 1); view.querySelector("#table-heading").textContent = `updates (${data.length})`; draw(currentPage); } });
+      const records = [...output.querySelectorAll(".row-select:checked")].map(box => data.find(item => sameId(item.id, box.dataset.id))).filter(Boolean);
+      if (records.length) deleteRecords({ table: tableName, records, view, removeRecord: record => { const index = data.findIndex(item => sameId(item.id, record.id)); if (index >= 0) data.splice(index, 1); view.querySelector("#table-heading").textContent = `updates (${data.length})`; draw(currentPage); } }).catch(error => setNotice(error.message || "Delete failed."));
     }
   });
   draw();
@@ -305,12 +311,26 @@ const showCompose = async v => {
   v.querySelector("#bc").onsubmit = async event => {
     event.preventDefault();
     const form = event.target, values = Object.fromEntries(new FormData(form));
+    if (!confirm("Send to ALL active subscribers? This cannot be undone.")) return;
+    const button = form.querySelector("button"), status = form.querySelector(".form-status");
+    button.disabled = true;
     try {
       const { data: session } = await sb.auth.getSession();
-      const result = await api("submit", { type: "broadcast", subject: String(values.subject).trim(), message: String(values.message).trim(), idempotency_key: crypto.randomUUID() }, session.session?.access_token);
-      form.querySelector(".form-status").textContent = result.message;
+      const idempotency_key = form.dataset.idempotency || crypto.randomUUID();
+      form.dataset.idempotency = idempotency_key;
+      const result = await api("submit", { type: "broadcast", subject: String(values.subject).trim(), message: String(values.message).trim(), idempotency_key }, session.session?.access_token);
+      status.textContent = result.message;
+      let remaining = Number(result.remaining ?? (result.broadcast_id ? 1 : 0)), processed = 0;
+      while (result.broadcast_id && remaining > 0 && processed < 20) {
+        const batch = await api("submit", { type: "process_broadcast", broadcast_id: result.broadcast_id }, session.session?.access_token);
+        remaining = Number(batch.remaining || 0);
+        processed++;
+        status.textContent = remaining ? `${result.message} Processing… ${remaining} remaining.` : `${result.message} All queued recipients were processed.`;
+      }
       form.reset();
-    } catch (error) { form.querySelector(".form-status").textContent = error.message; }
+      delete form.dataset.idempotency;
+    } catch (error) { status.textContent = error.message; }
+    finally { button.disabled = false; }
   };
 };
 analyticsAdmin = async function (v) {

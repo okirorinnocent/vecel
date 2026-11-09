@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SITE = (Deno.env.get("SITE_URL") ?? "").replace(/\/$/, "");
 if (!SITE) throw new Error("SITE_URL is required");
 const ORIGIN = new URL(SITE).origin;
-const cors = { "Access-Control-Allow-Origin": ORIGIN, "Access-Control-Allow-Headers": "content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
+const cors = { "Access-Control-Allow-Origin": ORIGIN, "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS", "Vary": "Origin" };
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 const s = (value: unknown, max: number) => String(value ?? "").replace(/[\u0000-\u001f\u007f-\u009f]/g, " ").trim().slice(0, max);
@@ -15,6 +15,11 @@ const equal = (a: string, b: string) => {
   let result = left.length ^ right.length;
   for (let i = 0; i < Math.max(left.length, right.length); i++) result |= (left[i % (left.length || 1)] ?? 0) ^ (right[i % (right.length || 1)] ?? 0);
   return result === 0;
+};
+const hashIp = async (request: Request) => {
+  const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${Deno.env.get("IP_HASH_SALT") ?? "missing"}:${ip}`));
+  return [...new Uint8Array(bytes)].map(x => x.toString(16).padStart(2, "0")).join("");
 };
 
 Deno.serve(async request => {
@@ -42,6 +47,9 @@ Deno.serve(async request => {
   const body = await request.json().catch(() => null);
   const amount = Number(body?.amount), currency = s(body?.currency, 3), name = s(body?.name, 100), email = s(body?.email, 254).toLowerCase();
   if (!Number.isFinite(amount) || amount <= 0 || !currencies.has(currency) || amount > maxAmount[currency] || !name || !validEmail(email)) return json({ error: "Enter a valid donation amount, currency, name and email." }, 400);
+  const rate = await db.rpc("consume_rate_limit", { p_key: `donate:${await hashIp(request)}`, p_limit: 5, p_window_seconds: 3600 });
+  if (rate.error) return json({ error: "Donations are temporarily unavailable. Please try again later." }, 503);
+  if (rate.data !== true) return json({ error: "Too many donation attempts. Please try again later." }, 429);
   const txRef = `jhie-${crypto.randomUUID()}`;
   const { error: insertError } = await db.from("donations").insert({ name, email, amount, currency, status: "pending", tx_ref: txRef });
   if (insertError) return json({ error: "Could not start the donation." }, 500);

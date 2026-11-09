@@ -47,9 +47,7 @@ if(det){
   else rest("select=*&limit=1&published=eq.true&slug=eq."+encodeURIComponent(slug)).then(a=>{
     const p=a&&a[0];
     if(p)return render(p);
-    const b=Object.prototype.hasOwnProperty.call(BASE,slug)?BASE[slug]:null;
-    if(b)render({...b,slug});
-    else fail("We couldn't find that program.");
+    fail("We couldn't find that program.");
   }).catch(()=>{
     const b=Object.prototype.hasOwnProperty.call(BASE,slug)?BASE[slug]:null;
     if(b)render({...b,slug,body:""});

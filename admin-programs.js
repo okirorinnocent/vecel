@@ -30,17 +30,19 @@ async function programsAdmin(v){
     b.disabled=true;
     const q=f.id.value?sb.from("programs").update({...row,updated_at:new Date().toISOString()}).eq("id",f.id.value)
       :sb.from("programs").insert({...row,sort_order:(data.length+1)*10});
-    const{error}=await q;b.disabled=false;
+    const{data:saved,error}=await q.select("id");b.disabled=false;
     if(error)return alert(error.code==="23505"?"That page address is already used by another program.":error.message);
+    if(!saved?.length)return alert("Not permitted or row not found");
+    await window.jhieAudit?.("programs", f.id.value ? "updated" : "created", f.id.value || saved[0].id, row);
     programsAdmin(v)};
   v.querySelectorAll(".row-actions[data-id] button").forEach(btn=>btn.onclick=async()=>{
-    const id=btn.parentElement.dataset.id,i=data.findIndex(p=>p.id===id),p=data[i],a=btn.dataset.a;
+    const id=btn.parentElement.dataset.id,i=data.findIndex(p=>String(p.id)===String(id)),p=data[i],a=btn.dataset.a;
     if(a==="edit"){for(const k of["title","summary","icon","slug","body"])f[k].value=p[k]||"";f.link_url.value=p.link_url||"";f.published.checked=p.published;f.id.value=p.id;
       $("#pf-h").textContent="Edit: "+p.title;$("#pf-reset").hidden=false;f.scrollIntoView({behavior:"smooth"})}
     if(a==="del"&&confirm(`Delete "${p.title}"? This cannot be undone. (Tip: untick "Show on the website" to hide it instead.)`)){
-      const{error}=await sb.from("programs").delete().eq("id",id);if(error)return alert(error.message);programsAdmin(v)}
+      const{data:deleted,error}=await sb.from("programs").delete().eq("id",id).select("id");if(error)return alert(error.message);if(!deleted?.length)return alert("Not permitted or row not found");await window.jhieAudit?.("programs","deleted",id,{});programsAdmin(v)}
     if(a==="up"||a==="down"){const j=a==="up"?i-1:i+1,arr=[...data];[arr[i],arr[j]]=[arr[j],arr[i]];
-      const res=await Promise.all(arr.map((r,n)=>sb.from("programs").update({sort_order:(n+1)*10}).eq("id",r.id)));
-      const bad=res.find(r=>r.error);if(bad)return alert(bad.error.message);programsAdmin(v)}
+      const res=await Promise.all(arr.map((r,n)=>sb.from("programs").update({sort_order:(n+1)*10}).eq("id",r.id).select("id")));
+      const bad=res.find(r=>r.error||!r.data?.length);if(bad)return alert(bad.error?.message||"Not permitted or row not found");await window.jhieAudit?.("programs","reordered",id,{sort_order:(j+1)*10});programsAdmin(v)}
   });
 }

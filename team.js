@@ -21,10 +21,10 @@
   };
   const targets = [$("#team-grid"), $("#team-preview")].filter(Boolean);
   if (!targets.length) return;
-  fetch(`${CFG.SUPA}/rest/v1/team_members?select=*&published=eq.true&order=sort_order.asc`, { headers: { apikey: CFG.KEY } })
+  fetch(`${CFG.SUPA}/rest/v1/published_team_members?select=*&order=sort_order.asc`, { headers: { apikey: CFG.KEY } })
     .then(response => response.ok ? response.json() : Promise.reject(new Error("Team unavailable")))
     .then(data => {
-      const members = Array.isArray(data) && data.length ? data : fallback;
+      const members = Array.isArray(data) ? data : fallback;
       targets.forEach(target => render(target, target.id === "team-preview" ? members.slice(0, 4) : members));
     })
     .catch(() => targets.forEach(target => render(target, target.id === "team-preview" ? fallback.slice(0, 4) : fallback)));

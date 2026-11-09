@@ -8,12 +8,8 @@
     : type === "checkbox" ? `<label class="check"><input name="${name}" type="checkbox"${row[name] ? " checked" : ""}>${label}</label>`
     : `<label>${label}<input name="${name}" type="${type || "text"}" value="${esc(row[name] || "")}" maxlength="${name === "email" ? 254 : 300}"></label>`).join("");
   const edit = (title, fields, row = {}, extras = "") => `<h2>${title}</h2><form class="stacked-form content-edit">${formFields(fields, row)}${extras}<button class="btn">Save</button><button type="button" class="btn btn-ghost cancel-edit">Cancel</button><p class="form-status" role="status"></p></form>`;
-  const refresh = (view, fn) => fn(view);
-  const save = async (table, id, form, fields) => {
-    const data = Object.fromEntries(fields.map(([name]) => [name, val(form, name)]));
-    const { error } = id ? await sb.from(table).update(data).eq("id", id) : await sb.from(table).insert(data);
-    if (error) throw error;
-  };
+  const sameId = (a, b) => String(a) === String(b);
+  const storagePath = (url, bucket) => { try { const match = new URL(url || "").pathname.match(new RegExp(`/storage/v1/object/(?:public|sign)/${bucket}/(.+)`)); return match ? decodeURIComponent(match[1]) : null; } catch { return null; } };
   const upload = async (bucket, file, max) => {
     if (!file || !file.size) return null;
     if (!imageTypes.includes(file.type) || file.type === "image/svg+xml") throw new Error("Use a JPG, PNG or WebP file.");
@@ -36,29 +32,37 @@
       form.onsubmit = async event => {
         event.preventDefault();
         try {
-          const dataToSave = Object.fromEntries(fields.filter(x => x[2] !== "file" && x[0] !== "published" && x[0] !== "show_email" && x[0] !== "show_phone").map(([name]) => [name, val(form, name)]));
+          const optional = ["email", "phone", "linkedin_url", "website_url", "department", "partner_since"];
+          const dataToSave = Object.fromEntries(fields.filter(x => x[2] !== "file" && x[0] !== "published" && x[0] !== "show_email" && x[0] !== "show_phone").map(([name, , type]) => [name, type === "number" ? (val(form, name) === "" ? null : Number(val(form, name))) : optional.includes(name) && val(form, name) === "" ? null : val(form, name)]));
           ["published", "show_email", "show_phone"].forEach(name => { if (fields.some(x => x[0] === name)) dataToSave[name] = checked(form, name); });
           if (options.validate) options.validate(dataToSave);
           if (options.slugFromTitle && !dataToSave.slug) dataToSave.slug = dataToSave.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-          if (options.removeUpload && form.querySelector("[name=remove_upload]")?.checked) dataToSave[options.uploadColumn] = null;
+          const removeOldUpload = options.removeUpload && form.querySelector("[name=remove_upload]")?.checked;
+          if (removeOldUpload) dataToSave[options.uploadColumn] = null;
           if (uploadField && uploadField.files[0]) dataToSave[options.uploadColumn] = await upload(options.bucket, uploadField.files[0], options.max);
           if (options.selects) Object.assign(dataToSave, options.selects(form));
-          const result = row ? await sb.from(tableName).update(dataToSave).eq("id", row.id) : await sb.from(tableName).insert(dataToSave);
+          const result = row ? await sb.from(tableName).update(dataToSave).eq("id", row.id).select("id") : await sb.from(tableName).insert(dataToSave).select("id");
           if (result.error) throw result.error;
+          if (!result.data?.length) throw new Error("Not permitted or row not found");
+          if (row && (removeOldUpload || uploadField?.files[0]) && row[options.uploadColumn]) {
+            const oldPath = storagePath(row[options.uploadColumn], options.bucket);
+            if (oldPath) { const { error: removeError } = await sb.storage.from(options.bucket).remove([oldPath]); if (removeError) console.warn("Old image cleanup failed:", removeError.message); }
+          }
           await window.jhieAudit?.(tableName, row ? "updated" : "created", row?.id, dataToSave);
           await contentAdmin(view, tableName, title, fields, columns, options);
         } catch (error) { form.querySelector(".form-status").textContent = error.message; }
       };
     };
     view.querySelector("#new-content")?.addEventListener("click", () => open(null));
-    view.querySelectorAll(".edit-row").forEach(button => button.onclick = () => open(data.find(row => row.id === button.dataset.id)));
-    view.querySelectorAll(".delete-row").forEach(button => button.onclick = async () => { if (!confirm("Delete this item?")) return; const { error: deleteError } = await sb.from(tableName).delete().eq("id", button.dataset.id); if (deleteError) alert(deleteError.message); else { await window.jhieAudit?.(tableName, "deleted", button.dataset.id, {}); contentAdmin(view, tableName, title, fields, columns, options); } });
+    view.querySelectorAll(".edit-row").forEach(button => button.onclick = () => open(data.find(row => sameId(row.id, button.dataset.id))));
+    view.querySelectorAll(".delete-row").forEach(button => button.onclick = async () => { if (!confirm("Delete this item?")) return; const row = data.find(item => sameId(item.id, button.dataset.id)); const { data: deleted, error: deleteError } = await sb.from(tableName).delete().eq("id", button.dataset.id).select("id"); if (deleteError) alert(deleteError.message); else if (!deleted?.length) alert("Not permitted or row not found"); else { if (row?.[options.uploadColumn]) { const oldPath = storagePath(row[options.uploadColumn], options.bucket); if (oldPath) { const { error: removeError } = await sb.storage.from(options.bucket).remove([oldPath]); if (removeError) console.warn("Old image cleanup failed:", removeError.message); } } await window.jhieAudit?.(tableName, "deleted", button.dataset.id, {}); contentAdmin(view, tableName, title, fields, columns, options); } });
     view.querySelectorAll(".move-row").forEach(button => button.onclick = async () => {
-      const index = data.findIndex(row => row.id === button.dataset.id), other = data[index + Number(button.dataset.dir)];
+      const index = data.findIndex(row => sameId(row.id, button.dataset.id)), other = data[index + Number(button.dataset.dir)];
       if (!other) return;
-      const first = await sb.from(tableName).update({ sort_order: other.sort_order }).eq("id", data[index].id);
-      const second = await sb.from(tableName).update({ sort_order: data[index].sort_order }).eq("id", other.id);
-      if (first.error || second.error) alert("Could not reorder items."); else { await window.jhieAudit?.(tableName, "reordered", data[index].id, { sort_order: other.sort_order }); contentAdmin(view, tableName, title, fields, columns, options); }
+      const reordered = [...data]; [reordered[index], reordered[index + Number(button.dataset.dir)]] = [reordered[index + Number(button.dataset.dir)], reordered[index]];
+      const results = await Promise.all(reordered.map((row, position) => sb.from(tableName).update({ sort_order: (position + 1) * 10 }).eq("id", row.id).select("id")));
+      const failed = results.find(result => result.error || !result.data?.length);
+      if (failed) alert(failed.error?.message || "Not permitted or row not found"); else { await window.jhieAudit?.(tableName, "reordered", data[index].id, { sort_order: (index + Number(button.dataset.dir) + 1) * 10 }); contentAdmin(view, tableName, title, fields, columns, options); }
     });
   }
   const teamFields = [["name", "Name", "text"], ["role_title", "Role title", "text"], ["department", "Department", "text"], ["bio", "Bio", "textarea"], ["email", "Email", "email"], ["phone", "Phone", "tel"], ["linkedin_url", "LinkedIn URL", "url"], ["sort_order", "Sort order", "number"], ["published", "Published", "checkbox"], ["show_email", "Show email (only with consent)", "checkbox"], ["show_phone", "Show phone (only with consent)", "checkbox"], ["photo", "Photo (JPG, PNG or WebP; max 2 MB)", "file"]];

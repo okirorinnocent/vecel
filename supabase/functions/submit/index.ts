@@ -52,18 +52,20 @@ async function confirmationMail(to: string, subject: string, html: string, kind:
 }
 async function verifyTurnstile(request: Request, token: string) {
   const secret = Deno.env.get("TURNSTILE_SECRET");
-  if (!secret) {
-    console.warn("TURNSTILE_SECRET is not configured; skipping Turnstile verification.");
-    return true;
-  }
-  if (!token) return false;
+  if (!secret || !token) return false;
   const form = new FormData();
   form.append("secret", secret);
   form.append("response", token);
   const ip = request.headers.get("cf-connecting-ip");
   if (ip) form.append("remoteip", ip);
-  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: form });
-  return response.ok && Boolean((await response.json()).success);
+  try {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: form });
+    if (!response.ok) return false;
+    const result = await response.json().catch(() => null);
+    return Boolean(result?.success);
+  } catch {
+    return false;
+  }
 }
 async function isAdmin(request: Request) {
   const token = request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
@@ -146,7 +148,9 @@ Deno.serve(async request => {
         ok ? sent++ : failed++; await sleep(100);
       }
       const { count: pending } = await db.from("broadcast_recipients").select("id", { count: "exact", head: true }).eq("broadcast_id", broadcastId).in("status", ["pending", "sending"]);
-      await db.from("broadcasts").update({ status: pending ? "processing" : "completed", sent_count: broadcast.sent_count + sent, failed_count: broadcast.failed_count + failed, completed_at: pending ? null : new Date().toISOString() }).eq("id", broadcastId);
+      const { error: counterError } = await db.rpc("increment_broadcast_counters", { p_broadcast_id: broadcastId, p_sent: sent, p_failed: failed });
+      if (counterError) throw counterError;
+      await db.from("broadcasts").update({ status: pending ? "processing" : "completed", completed_at: pending ? null : new Date().toISOString() }).eq("id", broadcastId);
       return json({ message: `Processed ${sent + failed}; ${pending ?? 0} remaining.`, remaining: pending ?? 0 });
     }
     return json({ error: "Unknown request." }, 400);

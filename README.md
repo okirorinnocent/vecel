@@ -147,13 +147,13 @@ After deploying, add your site URL to the allowed URLs in Supabase Auth settings
 Deploy the service-request changes with:
 
 ```bash
-supabase functions deploy submit
+supabase functions deploy submit --no-verify-jwt
 supabase functions deploy track --no-verify-jwt
 supabase functions deploy collect --no-verify-jwt
-supabase functions deploy donate
+supabase functions deploy donate --no-verify-jwt
 ```
 
-Run `supabase/production-fixes.sql` and `supabase/analytics-collect.sql` once. Set these Supabase Function secrets: `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL`, `SITE_URL`, `ALLOWED_ORIGINS` (comma-separated `https://jshealthinitiative.com,https://www.jshealthinitiative.com,https://js-health-initiative-east-africa.vercel.app`), `IP_HASH_SALT`, `TURNSTILE_SECRET`, `FLW_SECRET_KEY`, and `FLW_WEBHOOK_HASH` (or `FLW_SECRET_HASH`). Set the public Turnstile site key as `CFG.TURNSTILE_SITEKEY` in `config.js`. Never put the service-role key or provider secrets in frontend files.
+Run these SQL files in order: `supabase/base-tables.sql`, `supabase/security.sql`, `supabase/fix-updates-delete.sql`, `supabase/section-d.sql`, `supabase/production-fixes.sql`, `supabase/analytics-collect.sql`, then `supabase/programs.sql` and `supabase/programs-content.sql`. Set these Supabase Function secrets: `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL`, `SITE_URL`, `ALLOWED_ORIGINS` (comma-separated `https://jshealthinitiative.com,https://www.jshealthinitiative.com,https://js-health-initiative-east-africa.vercel.app`), `IP_HASH_SALT`, `TURNSTILE_SECRET`, `FLW_SECRET_KEY`, and `FLW_WEBHOOK_HASH` (or `FLW_SECRET_HASH`). Set the public Turnstile site key as `CFG.TURNSTILE_SITEKEY` in `config.js`. Never put the service-role key or provider secrets in frontend files.
 
 ### Analytics debugging
 

@@ -160,14 +160,14 @@ if ($("#banner")) {
 }
 
 if ($("#updates")) {
-  fetch(`${CFG.SUPA}/rest/v1/updates?select=title,body,image_url,created_at&published=eq.true&order=created_at.desc&limit=3`, { headers: { apikey: CFG.KEY } })
+  fetch(`${CFG.SUPA}/rest/v1/updates?select=title,body,image_url,created_at&published=eq.true&order=created_at.desc&limit=20`, { headers: { apikey: CFG.KEY } })
     .then(response => response.ok ? response.json() : Promise.reject(new Error("Could not load updates.")))
     .then(updates => {
       const formatDate = value => {
         const date = new Date(value);
         return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
       };
-      const fieldUpdates = PAGE === "services.html" ? updates.filter(update => /service|equipment|biomedical|maintenance|training/i.test(`${update.title} ${update.body}`)) : updates;
+      const fieldUpdates = (PAGE === "services.html" ? updates.filter(update => /service|equipment|biomedical|maintenance|training/i.test(`${update.title} ${update.body}`)) : updates).slice(0, 3);
       $("#updates").innerHTML = Array.isArray(fieldUpdates) && fieldUpdates.length
         ? fieldUpdates.map(update => `<article class="feature">${/^https:\/\//.test(update.image_url || "") ? `<img src="${esc(update.image_url)}" alt="" loading="lazy">` : ""}<span class="feature-date">${esc(formatDate(update.created_at))}</span><h3>${esc(update.title)}</h3><p>${esc(update.body)}</p></article>`).join("")
         : '<p class="updates-empty">Field notes from our sessions and programs will appear here. To hear first, subscribe at the bottom of this page.</p>';
