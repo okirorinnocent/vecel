@@ -26,16 +26,17 @@
     if (button) button.disabled = !enabled;
     form.dataset.turnstileReady = enabled ? "true" : "false";
   };
-  const render = form => {
+  const render = (form, force = false) => {
     if (!form) return;
     const container = form.querySelector(".cf-turnstile");
     if (!container) return;
+    if (!force && form.dataset.turnstileWidget) return;
     setSubmitState(form, false);
     if (!window.CFG?.TURNSTILE_SITEKEY) {
       message(form, "Security verification is not configured. Please try again later.", true);
       return;
     }
-    if (!window.turnstile) {
+    if (!window.turnstile || typeof window.turnstile.render !== "function") {
       message(form, "Security verification could not load. Check your connection or disable your ad blocker, then try again.", true);
       return;
     }
@@ -43,6 +44,7 @@
     container.replaceChildren();
     form.dataset.turnstileWidget = String(window.turnstile.render(container, {
       sitekey: window.CFG.TURNSTILE_SITEKEY,
+      size: "flexible",
       callback: token => {
         let input = form.querySelector('input[name="turnstile_token"]');
         if (!input) {
@@ -70,7 +72,7 @@
   };
   const renderAll = () => protectedForms().forEach(render);
   window.jhieTurnstileRender = form => {
-    if (form) render(form);
+    if (form) render(form, true);
     else renderAll();
   };
   window.jhieTurnstileReset = form => {
