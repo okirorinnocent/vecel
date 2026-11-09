@@ -101,6 +101,10 @@ const updateStoragePath = imageUrl => {
   } catch { return null; }
 };
 const deleteRecords = async ({ table, records, view, removeRecord }) => {
+  if (typeof HTMLDialogElement === "undefined" || typeof document.createElement("dialog").showModal !== "function") {
+    if (!window.confirm(`Delete ${records.length === 1 ? records[0].title || "this update" : `${records.length} updates`} permanently?`)) return;
+    return deleteRecordsNow({ table, records, view, removeRecord });
+  }
   const dialog = document.createElement("dialog");
   const summary = records.length === 1
     ? `${records[0].title || "this update"} (${new Date(records[0].created_at).toLocaleString()})`
@@ -135,32 +139,8 @@ const deleteRecords = async ({ table, records, view, removeRecord }) => {
     cancel.disabled = true;
     status.textContent = "Deleting…";
     try {
-      const { data: session } = await sb.auth.getSession();
-      if (!session.session) throw new Error("Your session has expired. Please sign in again.");
-      for (const record of records) {
-        const { data: deleted, error } = await sb.from(table).delete().eq("id", record.id).select("id");
-        if (error) { console.error(`Delete failed for ${table}:${record.id}`, error); throw error; }
-        if (!deleted?.length) {
-          const error = new Error("Nothing was changed. Your admin account may not have permission (check the RLS policy for public.admins)");
-          console.error(`Delete affected zero rows for ${table}:${record.id}`, error);
-          throw error;
-        }
-        const path = table === "updates" ? updateStoragePath(record.image_url) : null;
-        if (path) {
-          const { error: storageError } = await sb.storage.from("updates").remove([path]);
-          if (storageError) console.warn("Update image cleanup failed:", storageError.message);
-        }
-        await auditAdmin(table, "delete", record.id, { title: record.title, email: session.session.user.email || "" });
-        removeRecord(record);
-      }
+      await deleteRecordsNow({ table, records, view, removeRecord });
       closeDialog();
-      dialog.remove();
-      view.querySelector(".form-status")?.replaceChildren();
-      const notice = document.createElement("p");
-      notice.className = "form-status";
-      notice.setAttribute("role", "status");
-      notice.textContent = `Deleted ${records.length} ${records.length === 1 ? "update" : "updates"}.`;
-      view.querySelector(".table-notice")?.replaceChildren(notice);
     } catch (error) {
       status.textContent = error.message || "Delete failed. Please try again.";
       confirm.disabled = false;
@@ -169,9 +149,41 @@ const deleteRecords = async ({ table, records, view, removeRecord }) => {
   });
   dialog.addEventListener("keydown", onKeyDown);
   dialog.addEventListener("close", () => { if (dialog.isConnected) dialog.remove(); });
-  if (typeof dialog.showModal === "function") dialog.showModal();
-  else dialog.setAttribute("open", "");
+  try {
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+  } catch {
+    dialog.remove();
+    if (window.confirm(`Delete ${records.length === 1 ? records[0].title || "this update" : `${records.length} updates`} permanently?`)) {
+      deleteRecordsNow({ table, records, view, removeRecord }).catch(error => {
+        const notice = view.querySelector(".table-notice");
+        if (notice) notice.textContent = error.message || "Delete failed. Please try again.";
+      });
+    }
+    return;
+  }
   focusFirst();
+};
+const deleteRecordsNow = async ({ table, records, view, removeRecord }) => {
+  const { data: session } = await sb.auth.getSession();
+  if (!session.session) throw new Error("Your session has expired. Please sign in again.");
+  for (const record of records) {
+    const { data: deleted, error } = await sb.from(table).delete().eq("id", record.id).select("id");
+    if (error) throw new Error(`Delete failed: ${error.message}`);
+    if (!deleted?.length) throw new Error("Delete was rejected. Apply supabase/admin-updates-delete.sql and verify this user is in public.admins.");
+    const path = table === "updates" ? updateStoragePath(record.image_url) : null;
+    if (path) {
+      const { error: storageError } = await sb.storage.from("updates").remove([path]);
+      if (storageError) console.warn("Update image cleanup failed:", storageError.message);
+    }
+    await auditAdmin(table, "delete", record.id, { title: record.title, email: session.session.user.email || "" });
+    removeRecord(record);
+  }
+  const notice = document.createElement("p");
+  notice.className = "form-status";
+  notice.setAttribute("role", "status");
+  notice.textContent = `Deleted ${records.length} ${records.length === 1 ? "update" : "updates"}.`;
+  view.querySelector(".table-notice")?.replaceChildren(notice);
 };
 const tableAdmin = async (view, tableName) => {
   const columns = T[tableName], query = sb.from(tableName).select("*").order("created_at", { ascending: false }).limit(1000);
