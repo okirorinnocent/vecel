@@ -54,7 +54,8 @@ document.querySelectorAll(".nav-links a").forEach(link => link.addEventListener(
 }));
 
 if ($("#foot")) {
-  $("#foot").innerHTML = `<footer><div class="container footer-inner"><div><p><strong>JS Health Initiative East Africa</strong></p><p class="muted">Building healthier communities and creating opportunities across Western Uganda.</p><p class="muted">Mbarara · Company limited by guarantee</p><p><a href="get-involved.html">Get involved</a> · <a href="get-involved.html#partner">Partner</a> · <a href="volunteer.html">Volunteer</a> · <a href="donate.html">Donate</a> · <a href="contact.html">Contact</a></p></div><form class="stacked-form" data-type="subscribe" novalidate><label>Get occasional updates<input name="email" type="email" placeholder="you@example.com" maxlength="254" autocomplete="email" required></label><button class="btn">Subscribe</button><p class="form-status" role="status" aria-live="polite"></p></form></div></footer>`;
+  $("#foot").innerHTML = `<footer><div class="container footer-inner"><div><p><strong>JS Health Initiative East Africa</strong></p><p class="muted">Building healthier communities and creating opportunities across Western Uganda.</p><p class="muted">Mbarara · Company limited by guarantee</p><p><a href="get-involved.html">Get involved</a> · <a href="get-involved.html#partner">Partner</a> · <a href="volunteer.html">Volunteer</a> · <a href="donate.html">Donate</a> · <a href="contact.html">Contact</a></p><p><a href="privacy.html">Privacy</a> · <a href="cookies.html">Cookies</a> · <button class="text-link footer-cookie-settings" type="button">Cookie settings</button></p></div><form class="stacked-form" data-type="subscribe" novalidate><label>Get occasional updates<input name="email" type="email" placeholder="you@example.com" maxlength="254" autocomplete="email" required></label><button class="btn">Subscribe</button><p class="form-status" role="status" aria-live="polite"></p></form></div></footer>`;
+  $(".footer-cookie-settings")?.addEventListener("click", () => window.jhieCookieSettings?.());
 }
 
 const PAYMENT_HOST = /^((([\w-]+\.)*flutterwave\.com)|(([\w-]+\.)*dev-flutterwave\.com)|ravemodal-dev\.herokuapp\.com)$/;
@@ -64,6 +65,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 let lastSubmission = 0;
 
 document.querySelectorAll("form[data-type]").forEach(form => {
+  form.dataset.renderedAt = String(Date.now());
   form.insertAdjacentHTML("afterbegin", '<input name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">');
   form.querySelectorAll("[data-a]").forEach(button => {
     button.onclick = () => {
@@ -80,6 +82,10 @@ document.querySelectorAll("form[data-type]").forEach(form => {
       status.className = `form-status ${className || ""}`;
     };
     if (button.disabled) return;
+    if (Date.now() - Number(form.dataset.renderedAt) < 1200) {
+      setStatus("Please take a moment to review the form before sending.", "err");
+      return;
+    }
     if (!form.checkValidity()) {
       form.reportValidity();
       return;
@@ -129,6 +135,7 @@ document.querySelectorAll("form[data-type]").forEach(form => {
         return;
       }
       setStatus(result.message || "Thank you!", "ok");
+      if (window.jhieTrack) window.jhieTrack(data.type === "volunteer" ? "volunteer_submit" : data.type === "subscribe" ? "subscribe" : "form_submit");
       form.reset();
     } catch (error) {
       setStatus(error.message, "err");
