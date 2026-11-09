@@ -21,7 +21,7 @@ const det=$("#program");
 if(det){
   // Built-in copy, used only if the database cannot be reached (never for hidden or deleted programs)
   const BASE={
-    "biomedical-engineering-volunteer-services":{title:"Biomedical engineering volunteer services",icon:"⚙️",summary:"Free training, equipment maintenance guidance and practical support for healthcare teams."},
+    "biomedical-engineering-volunteer-services":{title:"Biomedical engineering volunteer services",icon:"⚙️",summary:"Free training, equipment maintenance guidance and practical support for healthcare teams.",body:"Who it is for: health facilities, clinicians, health workers and equipment users.\n\nWhat we do: we provide free user training, basic equipment checks, preventive maintenance guidance and practical troubleshooting support for healthcare equipment, working with facility teams and qualified volunteers.\n\nThe change we work toward: health workers who can use equipment safely and facilities that keep essential devices working, maintained and available for patient care."},
     "research-innovation":{title:"Research & innovation",icon:"🔬",summary:"Local research that responds to real challenges in our communities."},
     "public-health-education":{title:"Public health education",icon:"🩺",summary:"Critical health awareness delivered at community level."},
     "surgical-care-support":{title:"Surgical care support",icon:"🏥",summary:"Sourcing and subsidising essential equipment and implants so surgery is within reach."},
@@ -45,8 +45,11 @@ if(det){
   if(!slug)location.replace("index.html#work"); // opened without ?slug=
   else if(!/^[a-z0-9-]{2,60}$/.test(slug))fail("We couldn't find that program.");
   else rest("select=*&limit=1&published=eq.true&slug=eq."+encodeURIComponent(slug)).then(a=>{
-    const p=a&&a[0];if(!p)return fail("We couldn't find that program.");
-    render(p);
+    const p=a&&a[0];
+    if(p)return render(p);
+    const b=Object.prototype.hasOwnProperty.call(BASE,slug)?BASE[slug]:null;
+    if(b)render({...b,slug});
+    else fail("We couldn't find that program.");
   }).catch(()=>{
     const b=Object.prototype.hasOwnProperty.call(BASE,slug)?BASE[slug]:null;
     if(b)render({...b,slug,body:""});

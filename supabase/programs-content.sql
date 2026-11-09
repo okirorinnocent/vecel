@@ -1,15 +1,27 @@
 -- Run AFTER programs.sql. Replaces the "Describe this program here." placeholders with real page text
 -- that matches the homepage. Edit freely, or change it later from Admin > programs.
-update public.programs set slug='biomedical-engineering-volunteer-services',
-title='Biomedical engineering volunteer services',
-summary='Free training, equipment maintenance guidance and practical support for healthcare teams.',
-icon='⚙️',
-body =
-'Who it is for: health facilities, clinicians, health workers and equipment users.
+insert into public.programs(slug,title,summary,icon,body,sort_order,published)
+values (
+  'biomedical-engineering-volunteer-services',
+  'Biomedical engineering volunteer services',
+  'Free training, equipment maintenance guidance and practical support for healthcare teams.',
+  '⚙️',
+  'Who it is for: health facilities, clinicians, health workers and equipment users.
 
 What we do: we provide free user training, basic equipment checks, preventive maintenance guidance and practical troubleshooting support for healthcare equipment, working with facility teams and qualified volunteers. We document equipment needs and publish field notes, lessons and service updates when it is safe and appropriate to do so.
 
-The change we work toward: health workers who can use equipment safely and facilities that keep essential devices working, maintained and available for patient care.' where slug in ('digital-skilling','biomedical-engineering-volunteer-services');
+The change we work toward: health workers who can use equipment safely and facilities that keep essential devices working, maintained and available for patient care.',
+  10,
+  true
+)
+on conflict (slug) do update set
+  title=excluded.title,
+  summary=excluded.summary,
+  icon=excluded.icon,
+  body=excluded.body,
+  published=true,
+  updated_at=now();
+
 update public.programs set body =
 'Who it is for: our own programs, health partners and policymakers.
 
