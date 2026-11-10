@@ -20,7 +20,7 @@ $("#login").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target)
   const{error}=await sb.auth.signInWithPassword({email:f.get("email"),password:f.get("password")});
   b.disabled=false;e.target.password.value="";
   if(error)$("#ls").textContent="Sign-in failed. Check your email and password.";else{$("#ls").textContent="";boot()}};
-$("#out").onclick=async()=>{await sb.auth.signOut();boot()};
+$("#out").onclick=async()=>{window.jhieAdminIdle?.clear();await sb.auth.signOut();boot()};
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT"||ev==="TOKEN_REFRESH_FAILED")boot()});
 async function show(t){
   mark(t);const v=$("#view");
