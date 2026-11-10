@@ -8,7 +8,8 @@
 <main id="main"><section class="page-head"><div class="container"><h1>Donate</h1></div></section>
 <section class="section"><div class="container"><p class="section-lead">Your gift supports biomedical engineering volunteer services, free healthcare equipment training, maintenance guidance and community health programs. Pay securely with your Visa or Mastercard card. Card details are entered on our payment partner's secure page and never reach this website.</p>
 <div id="banner"></div>
-<form id="donate" class="stacked-form" data-type="donate" novalidate>
+<form id="donate" class="stacked-form" data-type="donate" data-turnstile data-turnstile-action="donate" novalidate>
+<div class="cf-turnstile" aria-label="Security check"></div>
 <div class="amounts"><button type="button" class="btn btn-ghost" data-a="10">10</button><button type="button" class="btn btn-ghost" data-a="25">25</button><button type="button" class="btn btn-ghost" data-a="50">50</button><button type="button" class="btn btn-ghost" data-a="100">100</button></div>
 <label>Amount<input name="amount" type="number" min="1" max="40000000" step="any" inputmode="decimal" required></label>
 <label>Currency<select name="currency"><option>USD</option><option>EUR</option><option>GBP</option><option>UGX</option></select></label>

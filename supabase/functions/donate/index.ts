@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { verifyTurnstile } from "../_shared/turnstile.ts";
 
 const SITE = (Deno.env.get("SITE_URL") ?? "").replace(/\/$/, "");
 if (!SITE) throw new Error("SITE_URL is required");
@@ -45,6 +46,7 @@ Deno.serve(async request => {
   }
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
   const body = await request.json().catch(() => null);
+  if (!await verifyTurnstile(request, String(body?.turnstile_token ?? ""), "donate")) return json({ error: "Please complete the security check and try again." }, 400);
   const amount = Number(body?.amount), currency = s(body?.currency, 3), name = s(body?.name, 100), email = s(body?.email, 254).toLowerCase();
   if (!Number.isFinite(amount) || amount <= 0 || !currencies.has(currency) || amount > maxAmount[currency] || !name || !validEmail(email)) return json({ error: "Enter a valid donation amount, currency, name and email." }, 400);
   const rate = await db.rpc("consume_rate_limit", { p_key: `donate:${await hashIp(request)}`, p_limit: 5, p_window_seconds: 3600 });

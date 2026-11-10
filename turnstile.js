@@ -45,6 +45,7 @@
     form.dataset.turnstileWidget = String(window.turnstile.render(container, {
       sitekey: window.CFG.TURNSTILE_SITEKEY,
       size: "flexible",
+      action: form.dataset.turnstileAction || form.dataset.type || "submit",
       callback: token => {
         let input = form.querySelector('input[name="turnstile_token"]');
         if (!input) {

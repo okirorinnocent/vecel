@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { verifyTurnstile } from "../_shared/turnstile.ts";
 
 const SITE = (Deno.env.get("SITE_URL") ?? "").replace(/\/$/, "");
 if (!SITE) throw new Error("SITE_URL is required");
@@ -50,23 +51,6 @@ async function confirmationMail(to: string, subject: string, html: string, kind:
   }
   return mail(to, subject, html, kind);
 }
-async function verifyTurnstile(request: Request, token: string) {
-  const secret = Deno.env.get("TURNSTILE_SECRET");
-  if (!secret || !token) return false;
-  const form = new FormData();
-  form.append("secret", secret);
-  form.append("response", token);
-  const ip = request.headers.get("cf-connecting-ip");
-  if (ip) form.append("remoteip", ip);
-  try {
-    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: form });
-    if (!response.ok) return false;
-    const result = await response.json().catch(() => null);
-    return Boolean(result?.success);
-  } catch {
-    return false;
-  }
-}
 async function isAdmin(request: Request) {
   const token = request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
   const { data } = await db.auth.getUser(token ?? "");
@@ -88,8 +72,9 @@ Deno.serve(async request => {
     const adminTypes = type === "broadcast" || type === "process_broadcast";
     const user = adminTypes ? await isAdmin(request) : null;
     if (adminTypes && !user) return json({ error: "Not authorised." }, 401);
-    const needsTurnstile = type === "contact" || type === "volunteer" || type === "service_request" || type === "subscribe";
-    if (needsTurnstile && !await verifyTurnstile(request, s(body.turnstile_token, 4096))) return json({ error: "Please complete the security check and try again." }, 400);
+    const turnstileActions: Record<string, string> = { contact: "contact", volunteer: "volunteer", service_request: "service_request", subscribe: "subscribe" };
+    const expectedAction = turnstileActions[type];
+    if (expectedAction && !await verifyTurnstile(request, String(body.turnstile_token ?? ""), expectedAction)) return json({ error: "Please complete the security check and try again." }, 400);
     if (!adminTypes && !(await limit(`${await hashIp(request)}:${type}`, type === "subscribe" || type === "confirm" || type === "unsubscribe" ? 20 : 10, 3600))) return json({ error: "Too many requests. Please try again later." }, 429);
     if (type === "contact") {
       const name = s(body.name, 100), email = s(body.email, 254), message = s(body.message, 3000);

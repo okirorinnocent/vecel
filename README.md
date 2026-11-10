@@ -14,7 +14,7 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 - Contact form
 - Donation page (USD, EUR, GBP, UGX) with quick-amount buttons and a payment success/failure banner
 - Newsletter subscription (footer on every page) with one-click unsubscribe links
-- Spam protection via a hidden honeypot field on all public forms
+- Spam protection via a hidden honeypot field and Cloudflare Turnstile on all public submission forms
 - Responsive, mobile-friendly design
 
 **Admin dashboard** (`/admin` or `admin.html`)
@@ -76,7 +76,7 @@ The site is a lightweight, **static front end** (plain HTML, CSS and JavaScript,
 - `app.js` injects the shared navigation and footer into every page and wires up any `<form data-type="...">`. Supported types include `contact`, `volunteer`, `subscribe`, `service_request` and `donate`.
 - Forms post to Supabase Edge Functions at `<SUPABASE_URL>/functions/v1/`:
   - `submit`: handles contact, volunteer, subscribe, service requests, unsubscribe and (admin-only) broadcast requests
-  - `donate`: creates a Flutterwave payment and returns a checkout link
+  - `donate`: validates Turnstile, creates a Flutterwave payment and returns a checkout link
 - The home page reads published rows from the `updates` table through the Supabase REST API.
 - The admin page signs in with Supabase Auth, then checks that the user exists in the `admins` table before showing the panel.
 
@@ -102,7 +102,7 @@ You'll need a Supabase project with the following.
 
 **Storage:** public buckets named `updates`, `team-photos` and `partner-logos`; admin write policies should protect all three.
 
-**Edge Functions:** `submit`, `collect` (with `track` compatibility), `track` and `donate` (store secrets such as the Flutterwave secret key, Turnstile secret and email provider key as Supabase function secrets, never in this repo).
+**Edge Functions:** `submit`, `collect` (with `track` compatibility), `track` and `donate` (store `TURNSTILE_SECRET` and a comma-separated `TURNSTILE_HOSTNAMES` value such as `www.jshealthinitiative.com` as Supabase function secrets, never in this repo).
 
 **Row Level Security:** enable RLS on every table. Public visitors should only be able to read published `updates`; all other reads and writes should be limited to admins or handled by the Edge Functions. The `admins` check in `admin.js` is only a UI gate, so RLS is what actually protects your data.
 
