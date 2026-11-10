@@ -202,6 +202,10 @@ If the widget remains on “Verifying…”:
 - **Donation amounts:** edit the `data-a` buttons in `donate.html`
 - **Page content and SEO:** edit the text and `<meta name="description">` in each HTML file
 
+### How to change social links
+
+Edit only the `SOCIAL` object in `config.js`. For each platform, change `url` to the real HTTPS profile or contact URL, update `label` if needed, and keep `enabled: true` to show it. To hide a platform everywhere, set `enabled: false`; YouTube and TikTok are included in the config but disabled by default.
+
 ## Contact
 
 **JS Health Initiative East Africa Ltd**
