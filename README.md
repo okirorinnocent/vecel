@@ -206,6 +206,28 @@ If the widget remains on “Verifying…”:
 
 Edit only the `SOCIAL` object in `config.js`. For each platform, change `url` to the real HTTPS profile or contact URL, update `label` if needed, and keep `enabled: true` to show it. To hide a platform everywhere, set `enabled: false`; YouTube and TikTok are included in the config but disabled by default.
 
+### Theme and colours
+
+The complete visual theme is controlled from the `:root` block at the top of `style.css`. Update the colour tokens, gradients, radius scale, shadows or spacing variables there to change the whole site consistently. Components use the shared tokens rather than page-specific colour values; hero, call-to-action and footer gradients are also defined there.
+
+| Pair | Approx. contrast |
+|---|---:|
+| `--ink` on `--cream` | 12.3:1 |
+| `--text` on `--cream` | 8.0:1 |
+| `--muted` on `--cream` | 5.2:1 |
+| `--white` on `--coral` | 5.0:1 |
+| `--white` on `--green-900` | 11.3:1 |
+| `--green-700` on `--white` | 6.7:1 |
+| `--coral` on `--coral-soft` | 4.7:1 |
+
+### Theme redesign checklist
+
+- **Before:** flat hero, mixed legacy colours, inconsistent shadows and radii. **After:** dark green hero gradient with readable overlay, unified tokens and restrained elevation.
+- **Before:** inconsistent buttons and focus states. **After:** coral primary, outlined green secondary, dark-background ghost buttons, visible green focus rings and 44px targets.
+- **Before:** mixed card treatments. **After:** white bordered cards, shared radius scale, soft green-tinted shadows and 2px hover lift.
+- **Before:** varied forms and admin tables. **After:** consistent 44px fields, success/error colors, zebra rows and sticky table headers.
+- **Before:** separate footer/page spacing styles. **After:** consistent 72–96px desktop and 48–64px mobile rhythm, gradient footer and responsive layouts.
+
 ## Contact
 
 **JS Health Initiative East Africa Ltd**
