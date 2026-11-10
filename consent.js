@@ -10,7 +10,7 @@
   const getBrowser = () => /Edg/i.test(navigator.userAgent) ? "Edge" : /Firefox/i.test(navigator.userAgent) ? "Firefox" : /Chrome/i.test(navigator.userAgent) ? "Chrome" : /Safari/i.test(navigator.userAgent) ? "Safari" : "Other";
   const getOs = () => /Windows/i.test(navigator.userAgent) ? "Windows" : /Mac OS/i.test(navigator.userAgent) ? "macOS" : /Android/i.test(navigator.userAgent) ? "Android" : /iPhone|iPad/i.test(navigator.userAgent) ? "iOS" : /Linux/i.test(navigator.userAgent) ? "Linux" : "Other";
   const allowed = () => { const choice = parse(); return Boolean(choice?.analytics && !dnt); };
-  const endpoint = () => `${CFG.SUPA}/functions/v1/collect`;
+  const endpoint = () => `${CFG.SUPA}/functions/v1/track`;
   const request = async payload => {
     if (!window.CFG) return;
     const body = JSON.stringify(payload);
@@ -20,7 +20,7 @@
       response = await fetch(endpoint(), { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true });
       if (debug) console.info("[analytics] response", response.status);
       if (!response.ok && response.status >= 400) {
-        const fallback = `${CFG.SUPA}/functions/v1/track`;
+        const fallback = `${CFG.SUPA}/functions/v1/collect`;
         response = await fetch(fallback, { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true });
         if (debug) console.info("[analytics] fallback response", fallback, response.status);
       }
@@ -39,7 +39,7 @@
     if (isAdmin || !allowed() || !window.CFG) return;
     const { visitor, session } = identifier();
     let referrer = "";
-    try { referrer = document.referrer ? new URL(document.referrer).hostname : ""; } catch {}
+    try { referrer = document.referrer ? new URL(document.referrer).hostname : ""; } catch { }
     request({ visitor_id: visitor, session_id: session, event, path: location.pathname.slice(0, 200), title: document.title.slice(0, 150), referrer_domain: referrer, screen: `${Math.min(screen.width, 1920)}x${Math.min(screen.height, 1920)}`, language: navigator.language, device: getDevice(), browser: getBrowser(), os: getOs(), consent_version: VERSION, ...meta });
   };
   const trackAnonymous = () => {
