@@ -142,7 +142,7 @@ Because it is a static site, it can be hosted anywhere that serves files, for ex
 - **GitHub Pages**: push to GitHub, then Settings → Pages → deploy from the `main` branch
 - **Netlify** or **Cloudflare Pages**: connect the repository (no build command, publish directory is the root)
 
-After deploying, add your site URL to the allowed URLs in Supabase Auth settings, and confirm that the Flutterwave redirect URL points back to `donate.html`.
+After deploying, add your site URL to the allowed URLs in Supabase Auth settings, and confirm that the Flutterwave redirect URL points back to `donate.html`. `ADMIN_EMAIL` must be the organisation inbox (`jshealthinitiativeeastafrica@gmail.com`), not a visitor's email address; form notifications use the visitor's address only as `Reply-To`.
 
 Deploy the service-request changes with:
 

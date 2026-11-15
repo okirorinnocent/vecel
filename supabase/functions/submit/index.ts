@@ -7,7 +7,8 @@ const ORIGIN = new URL(SITE).origin;
 const cors = { "Access-Control-Allow-Origin": ORIGIN, "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const FROM = Deno.env.get("FROM_EMAIL") ?? "JS Health Initiative <updates@jshealthinitiative.com>";
-const NOTIFY = Deno.env.get("ADMIN_EMAIL") ?? "jshealthinitiativeeastafrica@gmail.com";
+const ORG_EMAIL = "jshealthinitiativeeastafrica@gmail.com";
+const NOTIFY = Deno.env.get("ADMIN_EMAIL") ?? ORG_EMAIL;
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 const s = (value: unknown, max: number) => String(value ?? "").replace(/[\u0000-\u001f\u007f-\u009f]/g, " ").trim().slice(0, max);
 const esc = (value: string) => value.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -51,6 +52,8 @@ async function confirmationMail(to: string, subject: string, html: string, kind:
   }
   return mail(to, subject, html, kind);
 }
+const notificationRecipient = (submitterEmail: string) =>
+  NOTIFY.trim().toLowerCase() === submitterEmail.trim().toLowerCase() ? ORG_EMAIL : NOTIFY;
 async function isAdmin(request: Request) {
   const token = request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
   const { data } = await db.auth.getUser(token ?? "");
@@ -81,7 +84,7 @@ Deno.serve(async request => {
       if (!name || !message || !okEmail(email)) return json({ error: "Please fill in all fields with a valid email." }, 400);
       const { error } = await db.from("messages").insert({ name, email, message, status: "new" }); if (error) throw error;
       await confirmationMail(email, "Thank you for contacting JS Health Initiative", branded("Thank you for contacting us", "<p>We received your message and will reply soon.</p>"), "contact-confirmation");
-      await mail(NOTIFY, `New message from ${cleanName(name)}`, branded(`New message from ${cleanName(name)}`, `<p><b>${esc(name)}</b> (${esc(email)})</p><p>${esc(message).replace(/\n/g, "<br>")}</p>`), "contact-notification", email);
+      await mail(notificationRecipient(email), `New message from ${cleanName(name)}`, branded(`New message from ${cleanName(name)}`, `<p><b>${esc(name)}</b> (${esc(email)})</p><p>${esc(message).replace(/\n/g, "<br>")}</p>`), "contact-notification", email);
       return json({ message: "Thank you! We have received your message and will reply soon." });
     }
     if (type === "volunteer") {
@@ -89,7 +92,7 @@ Deno.serve(async request => {
       if (!name || !skills || !okEmail(email) || (phone && !/^[+()\d\s-]{7,30}$/.test(phone))) return json({ error: "Please fill in all required fields with valid contact details." }, 400);
       const { error } = await db.from("applications").insert({ name, email, phone: phone || null, skills, status: "new" }); if (error) throw error;
       await confirmationMail(email, "Thank you for volunteering", branded("Thank you for volunteering", "<p>We received your application and will be in touch.</p>"), "volunteer-confirmation");
-      await mail(NOTIFY, `New volunteer: ${cleanName(name)}`, branded(`New volunteer: ${cleanName(name)}`, `<p><b>${esc(name)}</b> (${esc(email)}, ${esc(phone)})</p><p>${esc(skills).replace(/\n/g, "<br>")}</p>`), "volunteer-notification", email);
+      await mail(notificationRecipient(email), `New volunteer: ${cleanName(name)}`, branded(`New volunteer: ${cleanName(name)}`, `<p><b>${esc(name)}</b> (${esc(email)}, ${esc(phone)})</p><p>${esc(skills).replace(/\n/g, "<br>")}</p>`), "volunteer-notification", email);
       return json({ message: "Thank you for volunteering! We will be in touch." });
     }
     if (type === "service_request") {
@@ -97,7 +100,7 @@ Deno.serve(async request => {
       if (!facilityName || !district || !contactName || !serviceType || !equipment || !message || !okEmail(email) || !/^[+()\d\s-]{7,30}$/.test(phone)) return json({ error: "Please fill in all required fields with valid contact details." }, 400);
       const { error } = await db.from("service_requests").insert({ facility_name: facilityName, district, contact_name: contactName, email, phone, service_type: serviceType, equipment, message, status: "new" }); if (error) throw error;
       await confirmationMail(email, "Thank you for your service request", branded("We received your service request", "<p>Thank you. Our team will review your request and contact you soon.</p>"), "service-request-confirmation");
-      await mail(NOTIFY, `New service request: ${cleanName(facilityName)}`, branded(`New service request: ${cleanName(facilityName)}`, `<p><b>Facility:</b> ${esc(facilityName)}<br><b>District:</b> ${esc(district)}<br><b>Contact:</b> ${esc(contactName)} (${esc(email)}, ${esc(phone)})<br><b>Service:</b> ${esc(serviceType)}<br><b>Equipment:</b> ${esc(equipment)}</p><p>${esc(message).replace(/\n/g, "<br>")}</p>`), "service-request-notification", email);
+      await mail(notificationRecipient(email), `New service request: ${cleanName(facilityName)}`, branded(`New service request: ${cleanName(facilityName)}`, `<p><b>Facility:</b> ${esc(facilityName)}<br><b>District:</b> ${esc(district)}<br><b>Contact:</b> ${esc(contactName)} (${esc(email)}, ${esc(phone)})<br><b>Service:</b> ${esc(serviceType)}<br><b>Equipment:</b> ${esc(equipment)}</p><p>${esc(message).replace(/\n/g, "<br>")}</p>`), "service-request-notification", email);
       return json({ message: "Thank you! We received your service request and will contact you soon." });
     }
     if (type === "subscribe") {
