@@ -144,14 +144,18 @@ Because it is a static site, it can be hosted anywhere that serves files, for ex
 
 After deploying, add your site URL to the allowed URLs in Supabase Auth settings, and confirm that the Flutterwave redirect URL points back to `donate.html`. `ADMIN_EMAIL` must be the organisation inbox (`jshealthinitiativeeastafrica@gmail.com`), not a visitor's email address; form notifications use the visitor's address only as `Reply-To`.
 
-Deploy the service-request changes with:
+Deploy the service-request changes from the repository root so Supabase includes `supabase/functions/_shared/turnstile.ts`:
 
 ```bash
+supabase login
+supabase link --project-ref YOUR_PROJECT_REF
 supabase functions deploy submit --no-verify-jwt
 supabase functions deploy track --no-verify-jwt
 supabase functions deploy collect --no-verify-jwt
 supabase functions deploy donate --no-verify-jwt
 ```
+
+Do not upload only `supabase/functions/submit/index.ts` in the dashboard; that omits the shared Turnstile module and causes a `Module not found "../_shared/turnstile.ts"` deployment error.
 
 Run these SQL files in order: `supabase/base-tables.sql`, `supabase/security.sql`, `supabase/fix-updates-delete.sql`, `supabase/section-d.sql`, `supabase/production-fixes.sql`, `supabase/analytics-collect.sql`, then `supabase/programs.sql` and `supabase/programs-content.sql`. Set these Supabase Function secrets: `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL`, `SITE_URL`, `ALLOWED_ORIGINS` (comma-separated `https://jshealthinitiative.com,https://www.jshealthinitiative.com,https://js-health-initiative-east-africa.vercel.app`), `IP_HASH_SALT`, `TURNSTILE_SECRET`, `TURNSTILE_HOSTNAMES` (comma-separated allowed widget hostnames), `FLW_SECRET_KEY`, and `FLW_WEBHOOK_HASH` (or `FLW_SECRET_HASH`). Set the public Turnstile site key as `CFG.TURNSTILE_SITEKEY` in `config.js`. Never put the service-role key or provider secrets in frontend files.
 
