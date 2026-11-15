@@ -1,10 +1,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { verifyTurnstile } from "../_shared/turnstile.ts";
 
 const SITE = (Deno.env.get("SITE_URL") ?? "").replace(/\/$/, "");
 if (!SITE) throw new Error("SITE_URL is required");
 const ORIGIN = new URL(SITE).origin;
-const cors = { "Access-Control-Allow-Origin": ORIGIN, "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
+const origins = new Set([
+  "https://jshealthinitiative.com",
+  "https://www.jshealthinitiative.com",
+  "https://js-health-initiative-east-africa.vercel.app",
+  "https://jshealthinitiative.vercel.app",
+  ...(Deno.env.get("ALLOWED_ORIGINS") ?? "").split(",").map(value => value.trim()).filter(Boolean),
+  ORIGIN
+]);
+const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS", "Vary": "Origin" };
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const FROM = Deno.env.get("FROM_EMAIL") ?? "JS Health Initiative <updates@jshealthinitiative.com>";
 const ORG_EMAIL = "jshealthinitiativeeastafrica@gmail.com";
@@ -16,6 +23,43 @@ const okEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) &
 const cleanName = (name: string) => name.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 let lastMailError = "";
+const verifyTurnstile = async (request: Request, token: string, expectedAction: string) => {
+  const secret = Deno.env.get("TURNSTILE_SECRET");
+  const expectedHostnames = new Set((Deno.env.get("TURNSTILE_HOSTNAMES") ?? "")
+    .split(",")
+    .map(hostname => hostname.trim().toLowerCase())
+    .filter(Boolean));
+  const siteUrl = Deno.env.get("SITE_URL");
+  if (siteUrl) {
+    try {
+      expectedHostnames.add(new URL(siteUrl).hostname.toLowerCase());
+    } catch {
+      console.error("SITE_URL is invalid; Turnstile hostname validation will use TURNSTILE_HOSTNAMES only.");
+    }
+  }
+  if (!secret || !token || token.length > 2048) return false;
+  const body = new URLSearchParams({ secret, response: token });
+  const ip = request.headers.get("cf-connecting-ip");
+  if (ip) body.set("remoteip", ip);
+  try {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+      signal: AbortSignal.timeout(10_000)
+    });
+    if (!response.ok) return false;
+    const result = await response.json().catch(() => null);
+    return Boolean(
+      result?.success === true &&
+      result.action === expectedAction &&
+      typeof result.hostname === "string" &&
+      expectedHostnames.has(result.hostname.toLowerCase())
+    );
+  } catch {
+    return false;
+  }
+};
 const hashIp = async (request: Request) => {
   const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${Deno.env.get("IP_HASH_SALT") ?? "missing"}:${ip}`));
@@ -63,8 +107,9 @@ async function isAdmin(request: Request) {
 }
 
 Deno.serve(async request => {
+  const origin = request.headers.get("Origin");
   if (request.method === "OPTIONS") return new Response("ok", { headers: cors });
-  if (request.headers.get("Origin") && request.headers.get("Origin") !== ORIGIN) return json({ error: "Origin not allowed." }, 403);
+  if (origin && !origins.has(origin)) return json({ error: "Origin not allowed." }, 403);
   if (request.method !== "POST" || Number(request.headers.get("content-length") ?? 0) > 20_000) return json({ error: "Invalid request." }, 400);
   let body: Record<string, unknown>;
   try { body = await request.json(); } catch { return json({ error: "Invalid request." }, 400); }

@@ -155,7 +155,7 @@ supabase functions deploy collect --no-verify-jwt
 supabase functions deploy donate --no-verify-jwt
 ```
 
-Do not upload only `supabase/functions/submit/index.ts` in the dashboard; that omits the shared Turnstile module and causes a `Module not found "../_shared/turnstile.ts"` deployment error.
+The `submit` function no longer depends on the shared Turnstile module, so its `index.ts` can also be deployed as a standalone dashboard function. The `donate` function still uses the shared module and should be deployed from the repository root with the CLI.
 
 Run these SQL files in order: `supabase/base-tables.sql`, `supabase/security.sql`, `supabase/fix-updates-delete.sql`, `supabase/section-d.sql`, `supabase/production-fixes.sql`, `supabase/analytics-collect.sql`, then `supabase/programs.sql` and `supabase/programs-content.sql`. Set these Supabase Function secrets: `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL`, `SITE_URL`, `ALLOWED_ORIGINS` (comma-separated `https://jshealthinitiative.com,https://www.jshealthinitiative.com,https://js-health-initiative-east-africa.vercel.app`), `IP_HASH_SALT`, `TURNSTILE_SECRET`, `TURNSTILE_HOSTNAMES` (comma-separated allowed widget hostnames), `FLW_SECRET_KEY`, and `FLW_WEBHOOK_HASH` (or `FLW_SECRET_HASH`). Set the public Turnstile site key as `CFG.TURNSTILE_SITEKEY` in `config.js`. Never put the service-role key or provider secrets in frontend files.
 
